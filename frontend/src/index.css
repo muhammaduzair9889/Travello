@@ -1,0 +1,334 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;900&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Performance optimization */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Dark mode configuration */
+@layer base {
+  :root {
+    --color-bg-primary: 255 255 255;
+    --color-bg-secondary: 249 250 251;
+    --color-text-primary: 17 24 39;
+    --color-text-secondary: 107 114 128;
+    --color-border: 229 231 235;
+  }
+
+  .dark {
+    --color-bg-primary: 17 24 39;
+    --color-bg-secondary: 31 41 55;
+    --color-text-primary: 249 250 251;
+    --color-text-secondary: 209 213 219;
+    --color-border: 55 65 81;
+  }
+  
+  /* Optimize font rendering */
+  html {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* ============================================ */
+/* MOBILE-FIRST RESPONSIVE UTILITIES */
+/* ============================================ */
+
+@layer utilities {
+  /* Container with responsive padding */
+  .container-responsive {
+    @apply px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto;
+  }
+  
+  /* Responsive text sizes */
+  .text-responsive-xs {
+    @apply text-xs sm:text-sm;
+  }
+  
+  .text-responsive-sm {
+    @apply text-sm sm:text-base;
+  }
+  
+  .text-responsive-base {
+    @apply text-base sm:text-lg;
+  }
+  
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+  
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl lg:text-3xl;
+  }
+  
+  .text-responsive-2xl {
+    @apply text-2xl sm:text-3xl lg:text-4xl;
+  }
+  
+  .text-responsive-3xl {
+    @apply text-3xl sm:text-4xl lg:text-5xl;
+  }
+  
+  /* Responsive spacing */
+  .section-padding {
+    @apply py-8 sm:py-12 lg:py-16;
+  }
+  
+  .card-padding {
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+  
+  /* Grid responsive */
+  .grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6;
+  }
+  
+  .grid-responsive-cards {
+    @apply grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8;
+  }
+  
+  /* Touch-friendly buttons */
+  .btn-touch {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+  
+  /* Prevent layout shift */
+  .aspect-ratio-16-9 {
+    @apply aspect-video;
+  }
+  
+  .aspect-ratio-square {
+    @apply aspect-square;
+  }
+  
+  /* Safe area for mobile notches */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Smooth scrolling */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Performance optimizations */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  .prevent-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Animated Gradient Background - Antique Blue Theme */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-gradient {
+  background: linear-gradient(-45deg, #1e3a5f, #2c5f8d, #3a7ca5, #16425b, #0f2b3d);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+/* Floating Particles Animation - Optimized */
+@keyframes float {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate3d(10px, -20px, 0);
+    opacity: 0.6;
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate3d(-10px, 20px, 0);
+    opacity: 0.7;
+  }
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.particle-1 {
+  width: 4px;
+  height: 4px;
+  background: rgba(58, 124, 165, 0.6);
+  animation: float 6s ease-in-out infinite;
+}
+
+.particle-2 {
+  width: 6px;
+  height: 6px;
+  background: rgba(210, 180, 140, 0.5);
+  animation: floatReverse 8s ease-in-out infinite;
+}
+
+.particle-3 {
+  width: 3px;
+  height: 3px;
+  background: rgba(184, 134, 11, 0.6);
+  animation: float 7s ease-in-out infinite;
+}
+
+/* Glassmorphism Effect - Darker for better text visibility */
+.glass-effect {
+  background: rgba(30, 58, 95, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(210, 180, 140, 0.3);
+}
+
+.glass-effect-strong {
+  background: rgba(30, 58, 95, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(210, 180, 140, 0.4);
+}
+
+/* Glow Effect - Antique Gold - Optimized */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(210, 180, 140, 0.5), 0 0 40px rgba(184, 134, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(210, 180, 140, 0.7), 0 0 60px rgba(184, 134, 11, 0.5);
+  }
+}
+
+.glow-effect {
+  animation: glow 3s ease-in-out infinite;
+  will-change: box-shadow;
+}
+
+/* Gradient Text - Antique Gold to Blue */
+.gradient-text {
+  background: linear-gradient(135deg, #D2B48C, #B8860B, #3a7ca5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================ */
+/* RESPONSIVE BREAKPOINTS */
+/* ============================================ */
+
+/* Mobile First - Base styles for mobile */
+@media (max-width: 640px) {
+  /* Ensure touch targets are at least 44x44px */
+  button, a, input, select, textarea {
+    min-height: 44px;
+  }
+  
+  /* Reduce animation intensity on mobile for performance */
+  .particle {
+    animation-duration: 8s !important;
+  }
+  
+  /* Optimize font sizes for mobile readability */
+  body {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Tablet */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1025px) {
+  /* Enable hover effects only on desktop */
+  .hover-lift:hover {
+    transform: translateY(-8px);
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Sharper borders and shadows */
+  .glass-effect,
+  .glass-effect-strong {
+    border-width: 0.5px;
+  }
+}
+
+/* Smooth Transitions - Only for specific properties */
+button, a, input, select {
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
