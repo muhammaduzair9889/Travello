@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: travello-backend
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn travello_backend.travello_backend.wsgi:application"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: travello-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+databases:
+  - name: travello-db
+    databaseName: travello
+    user: travello

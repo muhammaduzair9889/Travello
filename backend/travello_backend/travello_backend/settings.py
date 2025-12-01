@@ -16,6 +16,13 @@ import sys
 from decouple import config
 import pymysql
 
+# Import dj_database_url only if available (for Render deployment)
+try:
+    import dj_database_url
+    HAS_DJ_DATABASE_URL = True
+except ImportError:
+    HAS_DJ_DATABASE_URL = False
+
 # Install PyMySQL as MySQLdb
 pymysql.install_as_MySQLdb()
 
@@ -33,9 +40,13 @@ sys.path.insert(0, str(BASE_DIR.parent))
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-&ucg=*s49cy(oqt8r&oc3unq6%#vv6s47*u(pq&y)+yv2owpb3')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default='True', cast=bool)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+
+# Add Render host dynamically
+if 'RENDER' in os.environ:
+    ALLOWED_HOSTS.append(os.environ.get('RENDER_EXTERNAL_HOSTNAME'))
 
 
 # Application definition
@@ -57,6 +68,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -89,13 +101,23 @@ WSGI_APPLICATION = 'travello_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-# Using SQLite for easier setup and development
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR.parent / 'db.sqlite3',
+# Database configuration
+if 'DATABASE_URL' in os.environ and HAS_DJ_DATABASE_URL:
+    # Use PostgreSQL on Render
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600
+        )
     }
-}
+else:
+    # Use SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR.parent / 'db.sqlite3',
+        }
+    }
 
 # Uncomment below to use MySQL instead
 # DATABASES = {
@@ -198,16 +220,22 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
-# CORS Settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+# CORS Settings - Dynamic based on environment
+if DEBUG:
+    # Development: Allow all origins
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    # Production: Specific origins only
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+    # Add frontend URL from environment variable
+    if 'FRONTEND_URL' in os.environ:
+        CORS_ALLOWED_ORIGINS.append(os.environ.get('FRONTEND_URL'))
 
 CORS_ALLOW_CREDENTIALS = True
-
-# Allow all origins in dev if needed (commented by default)
-CORS_ALLOW_ALL_ORIGINS = True
 
 # Additional CORS settings for development
 CORS_ALLOW_HEADERS = [
@@ -223,7 +251,10 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # reCAPTCHA Settings
-RECAPTCHA_SECRET_KEY = '6Lc1nd0rAAAAAEGQ49HpLRq8kFj1CVPoC1-leNOd'
+RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='6Lc1nd0rAAAAAEGQ49HpLRq8kFj1CVPoC1-leNOd')
 
 # OpenAI Settings
-OPENAI_API_KEY = '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'
+OPENAI_API_KEY = config('OPENAI_API_KEY', default='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')
+
+# WhiteNoise Static Files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

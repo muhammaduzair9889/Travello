@@ -1,0 +1,390 @@
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaSearch, FaWifi, FaParking, FaStar, FaMapMarkerAlt, FaUsers, FaChild, FaBaby, FaBed, FaCalendar, FaExternalLinkAlt } from 'react-icons/fa';
+import { searchLahoreHotels } from '../services/hotelSearchAPI';
+
+/**
+ * Hotel Search Component for Lahore, Pakistan
+ * Integrates with Booking.com RapidAPI
+ */
+const HotelSearchLahore = () => {
+  // Search form state
+  const [searchParams, setSearchParams] = useState({
+    checkIn: '',
+    checkOut: '',
+    adults: 2,
+    children: 0,
+    infants: 0,
+    roomType: 'double'
+  });
+
+  // Results state
+  const [hotels, setHotels] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [searched, setSearched] = useState(false);
+
+  /**
+   * Handle form input changes
+   */
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setSearchParams(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  /**
+   * Handle search button click
+   */
+  const handleSearch = async () => {
+    setLoading(true);
+    setError('');
+    setSearched(true);
+
+    try {
+      console.log('🔍 Searching hotels with params:', searchParams);
+      
+      const results = await searchLahoreHotels({
+        checkIn: searchParams.checkIn,
+        checkOut: searchParams.checkOut,
+        adults: parseInt(searchParams.adults),
+        children: parseInt(searchParams.children),
+        roomType: searchParams.roomType
+      });
+
+      console.log('📊 Search results:', results);
+      setHotels(results);
+      
+      if (results.length === 0) {
+        setError('No hotels found. Please try again.');
+      }
+
+    } catch (err) {
+      console.error('Search error:', err);
+      setError(err.message || 'Failed to search hotels. Please try again.');
+      setHotels([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Format price in PKR
+   */
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-PK', {
+      style: 'currency',
+      currency: 'PKR',
+      minimumFractionDigits: 0
+    }).format(price);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8 px-4">
+      <div className="max-w-7xl mx-auto">
+        
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
+          <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">
+            Find Hotels in Lahore
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Search from thousands of hotels in Lahore, Pakistan
+          </p>
+        </motion.div>
+
+        {/* Search Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-8 border border-gray-200 dark:border-gray-700"
+        >
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
+            <FaSearch className="text-sky-600" />
+            Search Hotels by City
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            
+            {/* Destination (Fixed to Lahore) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Destination
+              </label>
+              <div className="relative">
+                <FaMapMarkerAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value="Lahore, Pakistan"
+                  disabled
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white cursor-not-allowed"
+                />
+              </div>
+            </div>
+
+            {/* Check-in Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Check-in Date
+              </label>
+              <div className="relative">
+                <FaCalendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="date"
+                  name="checkIn"
+                  value={searchParams.checkIn}
+                  onChange={handleInputChange}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Check-out Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Check-out Date
+              </label>
+              <div className="relative">
+                <FaCalendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="date"
+                  name="checkOut"
+                  value={searchParams.checkOut}
+                  onChange={handleInputChange}
+                  min={searchParams.checkIn || new Date().toISOString().split('T')[0]}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Adults */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Adults
+              </label>
+              <div className="relative">
+                <FaUsers className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <select
+                  name="adults"
+                  value={searchParams.adults}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                >
+                  {[1, 2, 3, 4, 5, 6].map(num => (
+                    <option key={num} value={num}>{num} Adult{num > 1 ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Children */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Children
+              </label>
+              <div className="relative">
+                <FaChild className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <select
+                  name="children"
+                  value={searchParams.children}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                >
+                  {[0, 1, 2, 3, 4].map(num => (
+                    <option key={num} value={num}>{num} {num === 1 ? 'Child' : 'Children'}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Infants */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Infants
+              </label>
+              <div className="relative">
+                <FaBaby className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <select
+                  name="infants"
+                  value={searchParams.infants}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                >
+                  {[0, 1, 2].map(num => (
+                    <option key={num} value={num}>{num} Infant{num !== 1 ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Room Type */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Room Type
+            </label>
+            <div className="flex flex-wrap gap-3">
+              {['single', 'double', 'triple', 'quad', 'family'].map(type => (
+                <button
+                  key={type}
+                  onClick={() => setSearchParams(prev => ({ ...prev, roomType: type }))}
+                  className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                    searchParams.roomType === type
+                      ? 'bg-sky-600 text-white shadow-lg'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <FaBed className="inline mr-2" />
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Search Button */}
+          <button
+            onClick={handleSearch}
+            disabled={loading}
+            className="w-full py-4 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white rounded-lg font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                Searching Hotels...
+              </>
+            ) : (
+              <>
+                <FaSearch />
+                Search Hotels
+              </>
+            )}
+          </button>
+
+          {/* Error Message */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400"
+            >
+              {error}
+            </motion.div>
+          )}
+        </motion.div>
+
+        {/* Results Section */}
+        <AnimatePresence>
+          {searched && !loading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="mb-4 text-gray-700 dark:text-gray-300">
+                <p className="text-lg font-semibold">
+                  {hotels.length > 0 ? `Found ${hotels.length} hotels in Lahore` : 'No hotels found'}
+                </p>
+              </div>
+
+              {/* Hotel Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {hotels.map((hotel, index) => (
+                  <motion.div
+                    key={hotel.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition-shadow"
+                  >
+                    {/* Hotel Image */}
+                    <div className="relative h-48 overflow-hidden">
+                      <img
+                        src={hotel.image}
+                        alt={hotel.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/400x300?text=Hotel+Image';
+                        }}
+                      />
+                      {hotel.rating > 0 && (
+                        <div className="absolute top-3 right-3 bg-yellow-500 text-white px-3 py-1 rounded-full flex items-center gap-1 font-bold shadow-lg">
+                          <FaStar />
+                          {hotel.rating.toFixed(1)}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Hotel Details */}
+                    <div className="p-5">
+                      <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2 line-clamp-2">
+                        {hotel.name}
+                      </h3>
+
+                      <div className="flex items-start gap-2 text-gray-600 dark:text-gray-400 mb-3">
+                        <FaMapMarkerAlt className="mt-1 flex-shrink-0" />
+                        <p className="text-sm line-clamp-2">{hotel.address}</p>
+                      </div>
+
+                      {/* Amenities */}
+                      <div className="flex gap-3 mb-4">
+                        {hotel.amenities?.wifi && (
+                          <div className="flex items-center gap-1 text-sky-600" title="WiFi Available">
+                            <FaWifi />
+                          </div>
+                        )}
+                        {hotel.amenities?.parking && (
+                          <div className="flex items-center gap-1 text-sky-600" title="Parking Available">
+                            <FaParking />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Price */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Price per night</p>
+                          <p className="text-2xl font-bold text-sky-600">
+                            {hotel.price > 0 ? formatPrice(hotel.price) : 'Price on request'}
+                          </p>
+                        </div>
+                        {hotel.reviewCount > 0 && (
+                          <div className="text-right">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {hotel.reviewCount} reviews
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* View Details Button */}
+                      <a
+                        href={hotel.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                      >
+                        View on Booking.com
+                        <FaExternalLinkAlt />
+                      </a>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
+export default HotelSearchLahore;

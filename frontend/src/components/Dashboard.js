@@ -133,6 +133,13 @@ const attractions = [
   { id: 4, name: 'Lahore Museum', lat: 31.5656, lng: 74.3189, category: 'Must See' },
   { id: 5, name: 'Shalimar Gardens', lat: 31.5875, lng: 74.3755, category: 'Must See' },
   { id: 6, name: 'Wazir Khan Mosque', lat: 31.5825, lng: 74.3192, category: 'Must See' },
+  { id: 21, name: 'Data Darbar', lat: 31.5782, lng: 74.3131, category: 'Must See' },
+  { id: 22, name: 'Jahangir\'s Tomb', lat: 31.6206, lng: 74.2769, category: 'Must See' },
+  { id: 23, name: 'Tomb of Allama Iqbal', lat: 31.5883, lng: 74.3108, category: 'Must See' },
+  { id: 25, name: 'Lahore Zoo', lat: 31.5686, lng: 74.3205, category: 'Must See' },
+  { id: 26, name: 'Chauburji', lat: 31.5489, lng: 74.3247, category: 'Must See' },
+  { id: 27, name: 'Hazuri Bagh', lat: 31.5881, lng: 74.3121, category: 'Must See' },
+  { id: 28, name: 'Tomb of Nur Jahan', lat: 31.6213, lng: 74.2800, category: 'Must See' },
   
   // Food Destinations
   { id: 7, name: 'Food Street Gawalmandi', lat: 31.5821, lng: 74.3220, category: 'Food' },
@@ -141,18 +148,32 @@ const attractions = [
   { id: 10, name: 'Anarkali Food Street', lat: 31.5590, lng: 74.3180, category: 'Food' },
   { id: 11, name: 'Fort Road Food Street', lat: 31.5886, lng: 74.3167, category: 'Food' },
   { id: 12, name: 'Yum Chinese Restaurant', lat: 31.4697, lng: 74.2728, category: 'Food' },
+  { id: 29, name: 'Butt Karahi Lakshmi', lat: 31.5791, lng: 74.3145, category: 'Food' },
+  { id: 30, name: 'Cafe Aylanto Gulberg', lat: 31.5212, lng: 74.3489, category: 'Food' },
+  { id: 31, name: 'Cooco\'s Den Restaurant', lat: 31.5820, lng: 74.3169, category: 'Food' },
+  { id: 32, name: 'Bundu Khan MM Alam', lat: 31.5204, lng: 74.3487, category: 'Food' },
+  { id: 33, name: 'Haveli Restaurant', lat: 31.5884, lng: 74.3147, category: 'Food' },
   
   // Shopping Areas
   { id: 13, name: 'Liberty Market', lat: 31.5088, lng: 74.3428, category: 'Shopping' },
   { id: 14, name: 'Anarkali Bazaar', lat: 31.5625, lng: 74.3195, category: 'Shopping' },
-  { id: 15, name: 'Packages Mall', lat: 31.4698, lng: 74.2666, category: 'Shopping' },
-  { id: 16, name: 'Emporium Mall', lat: 31.4142, lng: 74.2364, category: 'Shopping' },
-  { id: 17, name: 'Fortress Stadium', lat: 31.4543, lng: 74.3911, category: 'Shopping' },
-  { id: 18, name: 'Pace Shopping Mall', lat: 31.5123, lng: 74.3530, category: 'Shopping' },
+  { id: 15, name: 'Packages Mall', lat: 31.4717, lng: 74.3558, category: 'Shopping' },
+  { id: 16, name: 'Emporium Mall', lat: 31.4680, lng: 74.2664, category: 'Shopping' },
+  { id: 17, name: 'Fortress Stadium', lat: 31.5318, lng: 74.3687, category: 'Shopping' },
+  { id: 18, name: 'Pace Shopping Mall Gulberg', lat: 31.5123, lng: 74.3530, category: 'Shopping' },
+  { id: 34, name: 'Gulberg Main Market', lat: 31.5204, lng: 74.3487, category: 'Shopping' },
+  { id: 35, name: 'Mall Road Shopping', lat: 31.5656, lng: 74.3189, category: 'Shopping' },
+  { id: 36, name: 'Xinhua Mall Liberty', lat: 31.5088, lng: 74.3428, category: 'Shopping' },
   
   // Adventure/Parks
   { id: 19, name: 'Jilani Park (Racecourse)', lat: 31.5134, lng: 74.3393, category: 'Adventure' },
-  { id: 20, name: 'Jallo Park', lat: 31.4523, lng: 74.4058, category: 'Adventure' },
+  { id: 20, name: 'Jallo Park', lat: 31.5737, lng: 74.4772, category: 'Adventure' },
+  { id: 37, name: 'Lahore Canal Bank', lat: 31.5204, lng: 74.3489, category: 'Adventure' },
+  { id: 38, name: 'Model Town Park', lat: 31.4843, lng: 74.3150, category: 'Adventure' },
+  { id: 39, name: 'Greater Iqbal Park', lat: 31.5928, lng: 74.3093, category: 'Adventure' },
+  { id: 40, name: 'Lawrence Gardens (Bagh-e-Jinnah)', lat: 31.5686, lng: 74.3205, category: 'Adventure' },
+  { id: 41, name: 'Sozo Water Park', lat: 31.5815, lng: 74.4855, category: 'Adventure' },
+  { id: 42, name: 'Joyland', lat: 31.5334, lng: 74.3638, category: 'Adventure' },
 ];
 
 // Smart Packing Checklist Widget
@@ -512,10 +533,10 @@ const Sidebar = ({ activeFeature, setActiveFeature }) => {
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-800 dark:text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
-              John Doe
+              Faizan Khan
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400" style={{ fontFamily: 'Inter, sans-serif' }}>
-              john@example.com
+              faizan@example.com
             </p>
           </div>
         </div>
@@ -627,17 +648,46 @@ const Dashboard = () => {
     }
   };
 
-  const handleSearchHotels = (e) => {
+  const handleSearchHotels = async (e) => {
     e.preventDefault();
-    if (destination) {
-      const filtered = hotels.filter(hotel => 
-        hotel.city.toLowerCase().includes(destination.toLowerCase()) ||
-        hotel.location.toLowerCase().includes(destination.toLowerCase()) ||
-        hotel.hotel_name.toLowerCase().includes(destination.toLowerCase())
-      );
-      setFilteredHotels(filtered);
-    } else {
-      setFilteredHotels(hotels);
+    
+    // Import the search function
+    const { searchLahoreHotels } = await import('../services/hotelSearchAPI');
+    
+    setLoadingHotels(true);
+    
+    try {
+      // Call the Lahore hotel search API
+      const results = await searchLahoreHotels({
+        checkIn: checkIn,
+        checkOut: checkOut,
+        adults: parseInt(adults),
+        children: parseInt(children),
+        roomType: roomType
+      });
+      
+      console.log('📊 Hotels from API:', results);
+      setFilteredHotels(results);
+      
+      // Also update the main hotels list
+      setHotels(results);
+      
+    } catch (error) {
+      console.error('Error searching hotels:', error);
+      // Fallback to filtering existing hotels
+      if (destination) {
+        const filtered = hotels.filter(hotel => 
+          hotel.city?.toLowerCase().includes(destination.toLowerCase()) ||
+          hotel.location?.toLowerCase().includes(destination.toLowerCase()) ||
+          hotel.hotel_name?.toLowerCase().includes(destination.toLowerCase()) ||
+          hotel.name?.toLowerCase().includes(destination.toLowerCase())
+        );
+        setFilteredHotels(filtered);
+      } else {
+        setFilteredHotels(hotels);
+      }
+    } finally {
+      setLoadingHotels(false);
     }
   };
 
@@ -963,14 +1013,14 @@ const Dashboard = () => {
                             <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Single Room</p>
                               <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                ${hotel.single_bed_price_per_day}
+                                PKR {hotel.single_bed_price_per_day.toLocaleString()}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">per day</p>
                             </div>
                             <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
                               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Family Room</p>
                               <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                                ${hotel.family_room_price_per_day}
+                                PKR {hotel.family_room_price_per_day.toLocaleString()}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">per day</p>
                             </div>

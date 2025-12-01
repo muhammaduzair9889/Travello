@@ -17,6 +17,31 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isAdminLogin, setIsAdminLogin] = useState(false);
+  const [emailError, setEmailError] = useState('');
+
+  // Comprehensive email validation
+  const validateEmail = (email) => {
+    // Email must start with a letter
+    const emailRegex = /^[a-zA-Z]([a-zA-Z0-9._-]{0,63})?@[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/;
+    
+    if (!email) return 'Email is required';
+    if (email.length > 254) return 'Email is too long';
+    if (/^[0-9]/.test(email)) return 'Email must start with a letter, not a number';
+    if (!emailRegex.test(email)) return 'Please enter a valid email address';
+    if (email.includes('..')) return 'Email cannot contain consecutive dots';
+    
+    const [localPart, domain] = email.split('@');
+    if (localPart.startsWith('.') || localPart.endsWith('.')) {
+      return 'Email cannot start or end with a dot';
+    }
+    
+    const validExtensions = /\.(com|net|org|edu|gov|mil|co|io|ai|app|dev|tech|info|biz)$/i;
+    if (!validExtensions.test(email)) {
+      return 'Email must have a valid domain extension';
+    }
+    
+    return '';
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -24,6 +49,11 @@ const Login = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
+    
+    if (name === 'email') {
+      const validationError = validateEmail(value);
+      setEmailError(validationError);
+    }
   };
 
   const handleRecaptchaChange = (token) => {
@@ -34,6 +64,15 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Validate email
+    const emailValidationError = validateEmail(formData.email);
+    if (emailValidationError) {
+      setEmailError(emailValidationError);
+      setError('Please fix the email validation errors');
+      setLoading(false);
+      return;
+    }
 
     if (!recaptchaToken) {
       setError('Please complete the reCAPTCHA verification');
@@ -102,11 +141,19 @@ const Login = () => {
               type="email"
               autoComplete="email"
               required
-              className="pl-10 pr-4 py-2 w-full border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 placeholder-blue-300 bg-blue-50 transition"
+              className={`pl-10 pr-4 py-2 w-full border ${emailError ? 'border-red-500 focus:ring-red-400' : 'border-blue-200 focus:ring-blue-400'} rounded-lg focus:ring-2 focus:border-blue-400 text-gray-800 placeholder-blue-300 bg-blue-50 transition`}
               placeholder="Email address"
               value={formData.email}
               onChange={handleChange}
             />
+            {emailError && (
+              <p className="mt-1 text-xs text-red-600 flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                </svg>
+                {emailError}
+              </p>
+            )}
           </div>
           <div className="relative">
             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400">

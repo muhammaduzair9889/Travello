@@ -18,12 +18,85 @@ const Signup = () => {
   const [recaptchaToken, setRecaptchaToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
+
+  // Comprehensive email validation following Google's email standards
+  const validateEmail = (email) => {
+    // Email must start with a letter (not a number)
+    const emailRegex = /^[a-zA-Z]([a-zA-Z0-9._-]{0,63})?@[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/;
+    
+    if (!email) {
+      return 'Email is required';
+    }
+    
+    if (email.length > 254) {
+      return 'Email is too long (max 254 characters)';
+    }
+    
+    // Check if email starts with a number
+    if (/^[0-9]/.test(email)) {
+      return 'Email must start with a letter, not a number (e.g., user123@example.com, not 123user@example.com)';
+    }
+    
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address (e.g., user@example.com)';
+    }
+    
+    // Check for valid domain extensions
+    const validExtensions = /\.(com|net|org|edu|gov|mil|co|io|ai|app|dev|tech|info|biz|me|us|uk|ca|au|de|fr|jp|cn|in|br|ru|mx|es|it|nl|se|no|dk|fi|pl|za|sg|hk|nz|ae|sa|eg|ng|ke|gh|tz|ug|zm|zw|bw|mw|ao|mz|rw|bi|dj|er|et|so|sd|ss|td|cf|cg|cd|ga|gq|st|cm|ne|bf|ml|sn|gm|gn|sl|lr|ci|gh|tg|bj|ng|ne|chad)$/i;
+    
+    if (!validExtensions.test(email)) {
+      return 'Email must have a valid domain extension (e.g., .com, .net, .org)';
+    }
+    
+    // Check for consecutive dots
+    if (email.includes('..')) {
+      return 'Email cannot contain consecutive dots';
+    }
+    
+    // Check local part (before @)
+    const [localPart, domain] = email.split('@');
+    
+    // Prevent number-only emails (123@gmail.com)
+    if (/^[0-9]+$/.test(localPart)) {
+      return 'Email username cannot be numbers only (e.g., use john123@gmail.com instead of 123@gmail.com)';
+    }
+    
+    // Must contain at least 2 letters
+    const letterCount = (localPart.match(/[a-zA-Z]/g) || []).length;
+    if (letterCount < 2) {
+      return 'Email username must contain at least 2 letters';
+    }
+    
+    if (localPart.length < 1 || localPart.length > 64) {
+      return 'Email username must be between 1 and 64 characters';
+    }
+    
+    if (localPart.startsWith('.') || localPart.endsWith('.')) {
+      return 'Email cannot start or end with a dot';
+    }
+    
+    // Check domain part
+    if (!domain || domain.length < 4) {
+      return 'Invalid email domain';
+    }
+    
+    return '';
+  };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+    
+    // Real-time email validation
+    if (name === 'email') {
+      const validationError = validateEmail(value);
+      setEmailError(validationError);
+    }
   };
 
   const handleRecaptchaChange = (token) => {
@@ -34,6 +107,15 @@ const Signup = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Validate email before submission
+    const emailValidationError = validateEmail(formData.email);
+    if (emailValidationError) {
+      setEmailError(emailValidationError);
+      setError('Please fix the email validation errors');
+      setLoading(false);
+      return;
+    }
 
     if (!recaptchaToken) {
       setError('Please complete the reCAPTCHA verification');
@@ -114,11 +196,19 @@ const Signup = () => {
               type="email"
               autoComplete="email"
               required
-              className="pl-10 pr-4 py-2 w-full border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 placeholder-blue-300 bg-blue-50 transition"
-              placeholder="Enter your email"
+              className={`pl-10 pr-4 py-2 w-full border ${emailError ? 'border-red-500 focus:ring-red-400' : 'border-blue-200 focus:ring-blue-400'} rounded-lg focus:ring-2 focus:border-blue-400 text-gray-800 placeholder-blue-300 bg-blue-50 transition`}
+              placeholder="Enter your email (e.g., user@example.com)"
               value={formData.email}
               onChange={handleChange}
             />
+            {emailError && (
+              <p className="mt-1 text-xs text-red-600 flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                </svg>
+                {emailError}
+              </p>
+            )}
           </div>
           <div className="relative">
             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400">

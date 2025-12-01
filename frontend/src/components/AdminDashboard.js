@@ -154,12 +154,12 @@ const AdminDashboard = () => {
               transition={{ delay: 0.5 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => window.open('http://localhost:8000/admin', '_blank')}
+              onClick={() => window.open('http://127.0.0.1:8000/admin/', '_blank')}
               className="p-6 sm:p-8 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
             >
               <FaBook className="text-3xl sm:text-4xl mb-3 sm:mb-4" />
               <h3 className="text-xl sm:text-2xl font-bold mb-2">View All Bookings</h3>
-              <p className="text-xs sm:text-sm opacity-90">Access Django admin panel to view all bookings</p>
+              <p className="text-xs sm:text-sm opacity-90">Login with superadmin credentials to view bookings</p>
             </motion.button>
           </div>
         </div>

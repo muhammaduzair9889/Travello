@@ -292,7 +292,7 @@ const AdminHotels = () => {
         {/* Back Button */}
         <div className="mt-8 text-center">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/admin-dashboard')}
             className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
           >
             Back to Dashboard

@@ -8,9 +8,9 @@ class Command(BaseCommand):
     help = 'Creates a default admin user if it does not exist'
 
     def handle(self, *args, **options):
-        email = 'admin@travello.com'
-        password = 'Admin@123'
-        username = 'admin'
+        email = 'superadmin@travello.com'
+        password = 'SuperAdmin@2025'
+        username = 'superadmin'
 
         if User.objects.filter(email=email).exists():
             self.stdout.write(
