@@ -1,77 +1,313 @@
-# Root level gitignore for Travello Project
+# Travello Project - Comprehensive .gitignore
 
-# Python
+# ============================================
+# Python / Django Backend
+# ============================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-__pycache__/
-*.egg-info/
-dist/
-build/
-*.egg
 
-# Django
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Django specific
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
+static/
 
-# Virtual Environment
+# Virtual environments
 venv/
 env/
 ENV/
 .venv
+backend/venv/
 
-# Node
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# IPython
+profile_default/
+ipython_config.py
+
+# ============================================
+# Node.js / React Frontend
+# ============================================
+
+# Dependencies
 node_modules/
+frontend/node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output/
+
+# Production build
+build/
+frontend/build/
+dist/
+dist-ssr/
+
+# Misc
+.DS_Store
+*.local
+.cache/
+
+# npm / yarn / pnpm logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Build outputs
-dist/
-dist-ssr/
-build/
-*.local
-
-# Environment variables
-.env
+# React specific
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# IDE
+# ============================================
+# Environment Variables
+# ============================================
+
+# Environment files (keep .env.example)
+.env
+backend/.env
+frontend/.env
+.env.local
+.env.*.local
+
+# ============================================
+# IDE / Editor Files
+# ============================================
+
+# VSCode
 .vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# PyCharm / IntelliJ
 .idea/
+*.iml
+*.iws
+.idea_modules/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
 *.swp
 *.swo
 *~
+.*.swp
+.*.swo
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ============================================
+# Operating System Files
+# ============================================
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+.directory
+.Trash-*
+.nfs*
+
+# ============================================
+# Machine Learning / AI Models
+# ============================================
+
+# Large model files
+*.pkl
+*.h5
+*.hdf5
+*.joblib
+*.pth
+*.onnx
+*.pb
+
+# Hugging Face cache (keep the downloaded models in cache)
+# backend/.cache/huggingface/
+
+# Training data
+backend/ml_datasets/*.csv
+!backend/ml_datasets/README.md
+
+# Processed data
+backend/data/processed/*
+!backend/data/processed/.gitkeep
+
+# ============================================
+# Logs and Temporary Files
+# ============================================
+
+# Logs
+logs/
+*.log
+log/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.bak
+*.swp
+.cache/
+
+# ============================================
+# Deployment Files
+# ============================================
+
+# Deployment configs (keep examples)
+*.yaml
+*.yml
+!docker-compose.yml
+!.github/**/*.yml
+
+# Build scripts
+build.sh
+serve.py
+
+# ============================================
+# Documentation (Temporary/Generated)
+# ============================================
+
+# Keep only essential docs
+*_GUIDE.md
+*_COMPLETE.md
+*_WORKING.md
+*_SETUP.md
+*_CHECKLIST.md
+*_FIXED.md
+OPTIMIZATION*.md
+DEPLOYMENT*.md
+PERFORMANCE*.md
+
+# Keep these important docs
+!README.md
+!API_DOCUMENTATION.md
+!ARCHITECTURE.md
+!QUICK_START.md
+!START_HERE.md
+
+# ============================================
+# Security
+# ============================================
+
+# API keys and secrets
+*.pem
+*.key
+*.cert
+secrets.json
+credentials.json
+
+# ============================================
+# Misc
+# ============================================
+
+# Visual Studio
 *.suo
+*.user
+*.userosscache
+*.sln.docstates
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-# OS
-Thumbs.db
-.DS_Store
-
-# Logs
-logs/
-*.log
-
-# Coverage
-coverage/
-.nyc_output/
-
-# Misc
-.cache/
-temp/
-tmp/
+# Archives
+*.zip
+*.tar.gz
+*.rar

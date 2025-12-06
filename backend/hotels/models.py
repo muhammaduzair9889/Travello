@@ -28,6 +28,9 @@ class Hotel(models.Model):
 class Booking(models.Model):
     ROOM_TYPE_CHOICES = [
         ('single', 'Single'),
+        ('double', 'Double'),
+        ('triple', 'Triple'),
+        ('quad', 'Quad'),
         ('family', 'Family'),
     ]
     

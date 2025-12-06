@@ -33,9 +33,24 @@ const HotelBooking = () => {
     );
   }
 
-  const pricePerDay = roomType === 'single' 
-    ? parseFloat(hotel.single_bed_price_per_day) 
-    : parseFloat(hotel.family_room_price_per_day);
+  const getPricePerDay = () => {
+    switch(roomType) {
+      case 'single':
+        return parseFloat(hotel.single_bed_price_per_day);
+      case 'double':
+        return parseFloat(hotel.double_bed_price_per_day || hotel.single_bed_price_per_day * 1.4);
+      case 'triple':
+        return parseFloat(hotel.triple_bed_price_per_day || hotel.single_bed_price_per_day * 1.6);
+      case 'quad':
+        return parseFloat(hotel.quad_bed_price_per_day || hotel.single_bed_price_per_day * 1.7);
+      case 'family':
+        return parseFloat(hotel.family_room_price_per_day);
+      default:
+        return parseFloat(hotel.single_bed_price_per_day);
+    }
+  };
+
+  const pricePerDay = getPricePerDay();
 
   const calculateTotalPrice = () => {
     if (!formData.checkInDate || !formData.checkOutDate) return 0;

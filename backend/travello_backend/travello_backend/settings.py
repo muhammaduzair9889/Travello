@@ -256,5 +256,18 @@ RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='6Lc1nd0rAAAAAEGQ4
 # OpenAI Settings
 OPENAI_API_KEY = config('OPENAI_API_KEY', default='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')
 
+# Gemini AI Settings (Google's Free AI)
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+
+# Groq AI Settings (Free & Fast - Llama 3)
+GROQ_API_KEY = config('GROQ_API_KEY', default='')
+
+# RapidAPI Settings for Hotel Search
+RAPIDAPI_KEY = config('RAPIDAPI_KEY', default='')
+
+# Amadeus API Settings
+AMADEUS_API_KEY = config('AMADEUS_API_KEY', default='')
+AMADEUS_API_SECRET = config('AMADEUS_API_SECRET', default='')
+
 # WhiteNoise Static Files
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

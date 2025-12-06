@@ -651,41 +651,46 @@ const Dashboard = () => {
   const handleSearchHotels = async (e) => {
     e.preventDefault();
     
-    // Import the search function
-    const { searchLahoreHotels } = await import('../services/hotelSearchAPI');
-    
     setLoadingHotels(true);
     
     try {
+      // Import the search function
+      const { searchLahoreHotels } = await import('../services/hotelSearchAPI');
+      
+      console.log('🔍 Calling API with params:', {
+        checkIn,
+        checkOut,
+        adults: parseInt(adults),
+        children: parseInt(children),
+        roomType
+      });
+      
       // Call the Lahore hotel search API
       const results = await searchLahoreHotels({
         checkIn: checkIn,
         checkOut: checkOut,
         adults: parseInt(adults),
         children: parseInt(children),
+        infants: parseInt(infants),
         roomType: roomType
       });
       
-      console.log('📊 Hotels from API:', results);
-      setFilteredHotels(results);
+      console.log('✅ Hotels received from API:', results.length, 'hotels');
       
-      // Also update the main hotels list
-      setHotels(results);
+      if (results && results.length > 0) {
+        setFilteredHotels(results);
+        setHotels(results);
+        console.log('✅ Hotels displayed successfully');
+      } else {
+        console.warn('⚠️ No hotels found');
+        setFilteredHotels([]);
+        alert('No hotels found for these dates. Try different dates or contact support.');
+      }
       
     } catch (error) {
-      console.error('Error searching hotels:', error);
-      // Fallback to filtering existing hotels
-      if (destination) {
-        const filtered = hotels.filter(hotel => 
-          hotel.city?.toLowerCase().includes(destination.toLowerCase()) ||
-          hotel.location?.toLowerCase().includes(destination.toLowerCase()) ||
-          hotel.hotel_name?.toLowerCase().includes(destination.toLowerCase()) ||
-          hotel.name?.toLowerCase().includes(destination.toLowerCase())
-        );
-        setFilteredHotels(filtered);
-      } else {
-        setFilteredHotels(hotels);
-      }
+      console.error('❌ Error searching hotels:', error);
+      alert('Failed to fetch hotels: ' + (error.message || 'Backend server not running. Please start Django server on port 8000.'));
+      setFilteredHotels([]);
     } finally {
       setLoadingHotels(false);
     }

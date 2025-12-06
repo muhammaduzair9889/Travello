@@ -1,10 +1,17 @@
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, permission_classes, action
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.exceptions import APIException
 from django.db import transaction
 from .models import Hotel, Booking
 from .serializers import HotelSerializer, BookingSerializer, BookingCreateSerializer
+from .api_serializers import HotelSearchSerializer
+from .services import hotel_api_service
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class IsStaffUser(IsAuthenticated):
@@ -125,3 +132,123 @@ class BookingViewSet(viewsets.ModelViewSet):
         bookings = Booking.objects.filter(user=request.user)
         serializer = self.get_serializer(bookings, many=True)
         return Response(serializer.data)
+
+
+class RealTimeHotelSearchView(APIView):
+    """
+    Real-time hotel search API for Lahore, Pakistan
+    POST /api/hotels/search-live/
+    
+    Integrates with Booking.com RapidAPI to fetch live hotel data
+    """
+    authentication_classes = []  # Disable authentication
+    permission_classes = [AllowAny]  # Allow unauthenticated access for hotel search
+    
+    def post(self, request):
+        """
+        Search for hotels in Lahore with real-time data
+        
+        Request Body:
+        {
+            "check_in": "2025-12-15",
+            "check_out": "2025-12-18",
+            "adults": 2,
+            "children": 1,
+            "infants": 0,
+            "room_type": "double"
+        }
+        
+        Response:
+        {
+            "success": true,
+            "count": 15,
+            "destination": "Lahore, Pakistan",
+            "hotels": [...]
+        }
+        """
+        
+        # Validate input
+        serializer = HotelSearchSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            logger.warning(f"Invalid search parameters: {serializer.errors}")
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Invalid search parameters',
+                    'details': serializer.errors
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Extract validated data
+        validated_data = serializer.validated_data
+        check_in = validated_data['check_in'].strftime('%Y-%m-%d')
+        check_out = validated_data['check_out'].strftime('%Y-%m-%d')
+        adults = validated_data['adults']
+        children = validated_data.get('children', 0)
+        room_type = validated_data.get('room_type', 'double')
+        
+        logger.info(f"Hotel search request: {check_in} to {check_out}, {adults} adults, {children} children, {room_type} room")
+        
+        try:
+            # Call hotel API service
+            hotels = hotel_api_service.search_lahore_hotels(
+                check_in=check_in,
+                check_out=check_out,
+                adults=adults,
+                children=children,
+                room_type=room_type
+            )
+            
+            logger.info(f"Successfully fetched {len(hotels)} hotels from API")
+            logger.info(f"Hotel IDs: {[h.get('id', 'N/A') for h in hotels[:5]]}")
+            
+            # Always return hotels array, even if empty
+            hotels_list = hotels if hotels else []
+            
+            logger.info(f"Returning response with {len(hotels_list)} hotels")
+            
+            # Return success even if no hotels found (valid scenario)
+            return Response(
+                {
+                    'success': True,
+                    'count': len(hotels_list),
+                    'destination': 'Lahore, Pakistan',
+                    'search_params': {
+                        'check_in': check_in,
+                        'check_out': check_out,
+                        'adults': adults,
+                        'children': children,
+                        'room_type': room_type
+                    },
+                    'hotels': hotels_list
+                },
+                status=status.HTTP_200_OK
+            )
+        
+        except APIException as e:
+            # Handle API-specific errors
+            logger.error(f"Hotel API error: {str(e)}")
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Hotel search service error',
+                    'message': str(e),
+                    'hotels': []
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        
+        except Exception as e:
+            # Handle unexpected errors
+            logger.error(f"Hotel search failed: {str(e)}", exc_info=True)
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Failed to fetch hotel data',
+                    'message': f'An error occurred: {str(e)}',
+                    'hotels': []
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

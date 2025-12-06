@@ -1,18 +1,21 @@
+# Frontend-specific .gitignore
+
 # Dependencies
 node_modules/
 /.pnp
 .pnp.js
+.pnp.*
 
 # Testing
 /coverage
+.nyc_output/
 
-# Production
+# Production builds
 /build
 dist/
 dist-ssr/
 
-# Misc
-.DS_Store
+# Environment variables
 .env
 .env.local
 .env.development.local
@@ -28,6 +31,26 @@ lerna-debug.log*
 
 # Editor directories and files
 .vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+.cache/
+*.local
+temp/
+tmp/
+
+# React specific
+.eslintcache
 !.vscode/extensions.json
 .idea
 *.suo

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaWifi, FaParking, FaStar, FaSearch, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaWifi, FaParking, FaStar, FaSearch, FaMapMarkerAlt, FaUtensils, FaClock } from 'react-icons/fa';
 import { hotelAPI } from '../services/api';
 
 const HotelsList = () => {
@@ -137,7 +137,7 @@ const HotelsList = () => {
                   </p>
 
                   {/* Amenities */}
-                  <div className="flex gap-3 mb-4">
+                  <div className="flex flex-wrap gap-3 mb-4">
                     {hotel.wifi_available && (
                       <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                         <FaWifi className="text-sky-600" />
@@ -150,6 +150,28 @@ const HotelsList = () => {
                         <span>Parking</span>
                       </div>
                     )}
+                    {hotel.breakfast_available && (
+                      <div className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400 font-semibold">
+                        <FaUtensils className="text-green-600 dark:text-green-400" />
+                        <span>Breakfast</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Additional Details */}
+                  <div className="flex items-center justify-between mb-4 text-xs text-gray-500 dark:text-gray-400">
+                    {hotel.reviewCount > 0 && (
+                      <div className="flex items-center gap-1">
+                        <FaStar className="text-yellow-500" />
+                        <span>{hotel.reviewCount} reviews</span>
+                      </div>
+                    )}
+                    {hotel.lastBooked && (
+                      <div className="flex items-center gap-1">
+                        <FaClock className="text-gray-400" />
+                        <span>Last booked {hotel.lastBooked}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Availability */}
@@ -159,37 +181,65 @@ const HotelsList = () => {
                     </p>
                   </div>
 
-                  {/* Pricing */}
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Single Room</p>
-                      <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                        PKR {hotel.single_bed_price_per_day.toLocaleString('en-PK')}
+                  {/* Pricing - All 4 Room Types */}
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Double Room</p>
+                      <p className="text-base font-bold text-blue-600 dark:text-blue-400">
+                        PKR {(hotel.double_bed_price_per_day || Math.round(hotel.single_bed_price_per_day * 1.4)).toLocaleString('en-PK')}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">per day</p>
                     </div>
-                    <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+                    <div className="text-center p-2 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Triple Room</p>
+                      <p className="text-base font-bold text-green-600 dark:text-green-400">
+                        PKR {(hotel.triple_bed_price_per_day || Math.round(hotel.single_bed_price_per_day * 1.6)).toLocaleString('en-PK')}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">per day</p>
+                    </div>
+                    <div className="text-center p-2 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Quad Room</p>
+                      <p className="text-base font-bold text-orange-600 dark:text-orange-400">
+                        PKR {(hotel.quad_bed_price_per_day || Math.round(hotel.single_bed_price_per_day * 1.7)).toLocaleString('en-PK')}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">per day</p>
+                    </div>
+                    <div className="text-center p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
                       <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Family Room</p>
-                      <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                      <p className="text-base font-bold text-purple-600 dark:text-purple-400">
                         PKR {hotel.family_room_price_per_day.toLocaleString('en-PK')}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">per day</p>
                     </div>
                   </div>
 
-                  {/* Booking Buttons */}
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* Booking Buttons - 4 Types */}
+                  <div className="grid grid-cols-2 gap-2">
                     <button
-                      onClick={() => handleBookRoom(hotel, 'single')}
+                      onClick={() => handleBookRoom(hotel, 'double')}
                       disabled={hotel.available_rooms === 0}
-                      className="py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                     >
-                      Book Single
+                      Book Double
+                    </button>
+                    <button
+                      onClick={() => handleBookRoom(hotel, 'triple')}
+                      disabled={hotel.available_rooms === 0}
+                      className="py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                    >
+                      Book Triple
+                    </button>
+                    <button
+                      onClick={() => handleBookRoom(hotel, 'quad')}
+                      disabled={hotel.available_rooms === 0}
+                      className="py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                    >
+                      Book Quad
                     </button>
                     <button
                       onClick={() => handleBookRoom(hotel, 'family')}
                       disabled={hotel.available_rooms === 0}
-                      className="py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                     >
                       Book Family
                     </button>
