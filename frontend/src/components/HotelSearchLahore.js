@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaSearch, FaWifi, FaParking, FaStar, FaMapMarkerAlt, FaUsers, FaChild, FaBaby, FaBed, FaCalendar, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaSearch, FaWifi, FaParking, FaStar, FaMapMarkerAlt, FaUsers, FaChild, FaBaby, FaBed, FaCalendar, FaExternalLinkAlt, FaFilter } from 'react-icons/fa';
 import { searchLahoreHotels } from '../services/hotelSearchAPI';
 
 /**
@@ -55,6 +55,18 @@ const HotelSearchLahore = () => {
       });
 
       console.log('📊 Search results:', results);
+      
+      // Debug: Check first hotel's price fields
+      if (results.length > 0) {
+        console.log('🔍 First hotel price fields:', {
+          single: results[0].single_bed_price_per_day,
+          double: results[0].double_bed_price_per_day,
+          triple: results[0].triple_bed_price_per_day,
+          quad: results[0].quad_bed_price_per_day,
+          family: results[0].family_room_price_per_day
+        });
+      }
+      
       setHotels(results);
       
       if (results.length === 0) {
@@ -79,6 +91,32 @@ const HotelSearchLahore = () => {
       currency: 'PKR',
       minimumFractionDigits: 0
     }).format(price);
+  };
+
+  /**
+   * Handle room booking
+   */
+  const handleBooking = (hotel, roomType, price) => {
+    // Store booking info and navigate to booking page
+    const bookingData = {
+      hotelId: hotel.id,
+      hotelName: hotel.name,
+      location: hotel.address,
+      roomType: roomType,
+      pricePerNight: price,
+      checkIn: searchParams.checkIn,
+      checkOut: searchParams.checkOut,
+      adults: searchParams.adults,
+      children: searchParams.children
+    };
+    
+    console.log('📝 Booking:', bookingData);
+    
+    // Store in localStorage for booking page
+    localStorage.setItem('bookingData', JSON.stringify(bookingData));
+    
+    // Navigate to booking page (you can customize this route)
+    window.location.href = '/hotel-booking';
   };
 
   return (
@@ -269,6 +307,26 @@ const HotelSearchLahore = () => {
             )}
           </button>
 
+          {/* View Advanced Results Button */}
+          {searched && hotels.length > 0 && (
+            <button
+              onClick={() => {
+                const params = new URLSearchParams({
+                  checkIn: searchParams.checkIn,
+                  checkOut: searchParams.checkOut,
+                  adults: searchParams.adults,
+                  children: searchParams.children,
+                  roomType: searchParams.roomType
+                });
+                window.location.href = `/hotels/results?${params.toString()}`;
+              }}
+              className="w-full mt-3 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 shadow-lg"
+            >
+              <FaFilter />
+              View Advanced Results (Sorting, Filters & Map)
+            </button>
+          )}
+
           {/* Error Message */}
           {error && (
             <motion.div
@@ -348,19 +406,79 @@ const HotelSearchLahore = () => {
                         )}
                       </div>
 
-                      {/* Price */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Price per night</p>
-                          <p className="text-2xl font-bold text-sky-600">
-                            {hotel.price > 0 ? formatPrice(hotel.price) : 'Price on request'}
-                          </p>
-                        </div>
-                        {hotel.reviewCount > 0 && (
-                          <div className="text-right">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {hotel.reviewCount} reviews
-                            </p>
+                      {/* Room Type Booking Options */}
+                      <div className="space-y-3 mb-4">
+                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Choose Room Type:</p>
+                        
+                        {/* Double Room */}
+                        {hotel.double_bed_price_per_day && hotel.double_bed_price_per_day > 0 && (
+                          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                            <div>
+                              <p className="font-semibold text-gray-800 dark:text-white">Double Room</p>
+                              <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                {formatPrice(hotel.double_bed_price_per_day)}/night
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleBooking(hotel, 'double', hotel.double_bed_price_per_day)}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                            >
+                              Book Now
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Triple Room */}
+                        {hotel.triple_bed_price_per_day && hotel.triple_bed_price_per_day > 0 && (
+                          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg border border-purple-200 dark:border-purple-700">
+                            <div>
+                              <p className="font-semibold text-gray-800 dark:text-white">Triple Room</p>
+                              <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                                {formatPrice(hotel.triple_bed_price_per_day)}/night
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleBooking(hotel, 'triple', hotel.triple_bed_price_per_day)}
+                              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                            >
+                              Book Now
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Quad Room */}
+                        {hotel.quad_bed_price_per_day && hotel.quad_bed_price_per_day > 0 && (
+                          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg border border-green-200 dark:border-green-700">
+                            <div>
+                              <p className="font-semibold text-gray-800 dark:text-white">Quad Room</p>
+                              <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                                {formatPrice(hotel.quad_bed_price_per_day)}/night
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleBooking(hotel, 'quad', hotel.quad_bed_price_per_day)}
+                              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                            >
+                              Book Now
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Family Room */}
+                        {hotel.family_room_price_per_day && hotel.family_room_price_per_day > 0 && (
+                          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg border border-orange-200 dark:border-orange-700">
+                            <div>
+                              <p className="font-semibold text-gray-800 dark:text-white">Family Room</p>
+                              <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                {formatPrice(hotel.family_room_price_per_day)}/night
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleBooking(hotel, 'family', hotel.family_room_price_per_day)}
+                              className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors"
+                            >
+                              Book Now
+                            </button>
                           </div>
                         )}
                       </div>

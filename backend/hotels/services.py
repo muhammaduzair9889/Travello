@@ -73,12 +73,12 @@ class HotelAPIService:
             
             all_hotels = []
             
-            # Fetch multiple pages to get up to 100 hotels (25 per page)
-            for page in range(0, 4):  # 4 pages = 100 hotels
+            # Fetch multiple pages to get up to 200 hotels (25 per page)
+            for page in range(0, 8):  # 8 pages = 200 hotels
                 try:
                     search_params['page_number'] = str(page)
                     
-                    logger.info(f"Fetching page {page+1}/4...")
+                    logger.info(f"Fetching page {page+1}/8...")
                     
                     response = requests.get(
                         f"{self.API_BASE_URL}/hotels/search",
@@ -100,13 +100,13 @@ class HotelAPIService:
                     all_hotels.extend(page_hotels)
                     logger.info(f"Page {page+1}: Added {len(page_hotels)} hotels (Total: {len(all_hotels)})")
                     
-                    # Stop if we have 100+ hotels
-                    if len(all_hotels) >= 100:
+                    # Stop if we have 200+ hotels
+                    if len(all_hotels) >= 200:
                         logger.info(f"Reached {len(all_hotels)} hotels, stopping")
                         break
                     
                     # Delay between requests to respect rate limits
-                    if page < 3:
+                    if page < 7:
                         time.sleep(1.5)
                         
                 except requests.exceptions.HTTPError as http_err:
@@ -270,7 +270,25 @@ class HotelAPIService:
             ['WiFi', 'Pool', 'Spa', 'Room Service']
         ]
         
-        for idx, (name, address, price, rating, reviews, lat, lng) in enumerate(hotel_data, 1):
+        # Duplicate hotel data to reach 200 hotels with variations
+        extended_hotel_data = []
+        for i in range(3):  # Triple the hotels to get ~270, then we'll limit to 200
+            for idx, (name, address, price, rating, reviews, lat, lng) in enumerate(hotel_data, 1):
+                variation = f" - Branch {i+1}" if i > 0 else ""
+                extended_hotel_data.append((
+                    name + variation,
+                    address if i == 0 else f"{address} {['Extension', 'Premium', 'Deluxe'][i-1] if i > 0 else ''}",
+                    int(price * (1 + i * 0.08)),  # Slightly vary prices
+                    max(7.0, rating - (i * 0.15)),  # Slightly vary ratings, keep above 7.0
+                    reviews + (i * 40),
+                    lat + (i * 0.0015),  # Slightly vary coordinates
+                    lng + (i * 0.0015)
+                ))
+        
+        # Limit to 200 hotels
+        extended_hotel_data = extended_hotel_data[:200]
+        
+        for idx, (name, address, price, rating, reviews, lat, lng) in enumerate(extended_hotel_data, 1):
             hotel_dict = {
                 'id': idx,
                 'hotel_name': name,
@@ -278,6 +296,9 @@ class HotelAPIService:
                 'city': 'Lahore',
                 'country': 'Pakistan',
                 'single_bed_price_per_day': int(price * 0.7),
+                'double_bed_price_per_day': int(price),
+                'triple_bed_price_per_day': int(price * 1.3),
+                'quad_bed_price_per_day': int(price * 1.5),
                 'family_room_price_per_day': int(price * 1.8),
                 'total_rooms': 50 + (idx % 100),
                 'available_rooms': 5 + (idx % 25),
@@ -351,8 +372,11 @@ class HotelAPIService:
                 # Get images
                 image_url = hotel.get('main_photo_url', hotel.get('max_photo_url', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500'))
                 
-                # Estimate room prices
+                # Estimate room prices based on base price
                 single_price = int(price_pkr * 0.7)
+                double_price = int(price_pkr)
+                triple_price = int(price_pkr * 1.3)
+                quad_price = int(price_pkr * 1.5)
                 family_price = int(price_pkr * 1.8)
                 
                 # Build hotel dict
@@ -363,6 +387,9 @@ class HotelAPIService:
                     'city': city,
                     'country': 'Pakistan',
                     'single_bed_price_per_day': single_price,
+                    'double_bed_price_per_day': double_price,
+                    'triple_bed_price_per_day': triple_price,
+                    'quad_bed_price_per_day': quad_price,
                     'family_room_price_per_day': family_price,
                     'total_rooms': 50,
                     'available_rooms': 10,
