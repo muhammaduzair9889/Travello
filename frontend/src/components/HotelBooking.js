@@ -79,8 +79,8 @@ const HotelBooking = () => {
       return;
     }
 
-    if (formData.rooms > hotel.available_rooms) {
-      alert(`Only ${hotel.available_rooms} rooms available`);
+    if (!hotel.is_scraped && formData.rooms > (hotel.available_rooms || 10)) {
+      alert(`Only ${hotel.available_rooms || 10} rooms available`);
       return;
     }
 
@@ -207,7 +207,7 @@ const HotelBooking = () => {
                   onChange={(e) => setFormData({ ...formData, rooms: parseInt(e.target.value) })}
                   required
                 >
-                  {[...Array(Math.min(hotel.available_rooms, 10)).keys()].map((n) => (
+                  {[...Array(Math.min(hotel.available_rooms || 10, 10)).keys()].map((n) => (
                     <option key={n + 1} value={n + 1}>
                       {n + 1} {n + 1 === 1 ? 'Room' : 'Rooms'}
                     </option>

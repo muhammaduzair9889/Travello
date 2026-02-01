@@ -18,6 +18,7 @@ const ChatWidget = lazy(() => import('./components/ChatWidget'));
 const HotelsList = lazy(() => import('./components/HotelsList'));
 const HotelSearchLahore = lazy(() => import('./components/HotelSearchLahore'));
 const HotelResults = lazy(() => import('./components/HotelResults'));
+const HotelSearchResults = lazy(() => import('./components/HotelSearchResults'));
 const HotelBooking = lazy(() => import('./components/HotelBooking'));
 const HotelDetailPage = lazy(() => import('./components/HotelDetailPage'));
 const Payment = lazy(() => import('./components/Payment'));
@@ -83,6 +84,7 @@ function App() {
                   <Route path="/hotels/:id" element={<HotelDetailPage />} />
                   <Route path="/hotels/search-lahore" element={<HotelSearchLahore />} />
                   <Route path="/hotels/results" element={<HotelResults />} />
+                  <Route path="/hotels/search-results" element={<HotelSearchResults />} />
                   <Route path="/hotel-booking" element={<HotelBooking />} />
                   <Route path="/payment" element={<Payment />} />
                   <Route path="/payment/:bookingId" element={<PaymentPage />} />

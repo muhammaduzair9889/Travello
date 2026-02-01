@@ -7,26 +7,26 @@ const SplashScreen = ({ onComplete }) => {
   const [currentPhase, setCurrentPhase] = useState(0);
 
   useEffect(() => {
-    // Progress bar animation
+    // Progress bar animation - faster (3 seconds)
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(progressInterval);
           return 100;
         }
-        return prev + 1;
+        return prev + 3.4; // Faster progress
       });
-    }, 100); // 100ms * 100 = 10 seconds
+    }, 100);
 
     // Phase changes for text animation
     const phaseInterval = setInterval(() => {
       setCurrentPhase((prev) => (prev + 1) % 3);
-    }, 3000); // Change phase every 3 seconds
+    }, 1000); // Change phase every 1 second
 
-    // Complete after 10 seconds
+    // Complete after 3 seconds
     const completeTimer = setTimeout(() => {
       onComplete();
-    }, 10000);
+    }, 3000);
 
     return () => {
       clearInterval(progressInterval);
@@ -76,12 +76,12 @@ const SplashScreen = ({ onComplete }) => {
 
       {/* Main Content */}
       <div className="relative z-10 text-center px-4">
-        {/* Animated Globe Icon */}
+        {/* Animated Globe Icon - NO ROTATION */}
         <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
           transition={{ 
-            duration: 1, 
+            duration: 0.8, 
             ease: 'easeOut',
             type: 'spring',
             stiffness: 100
@@ -90,15 +90,9 @@ const SplashScreen = ({ onComplete }) => {
         >
           <motion.div
             animate={{ 
-              rotate: 360,
-              scale: [1, 1.1, 1]
+              scale: [1, 1.05, 1]
             }}
             transition={{ 
-              rotate: {
-                duration: 4,
-                repeat: Infinity,
-                ease: 'linear'
-              },
               scale: {
                 duration: 2,
                 repeat: Infinity,
@@ -107,33 +101,36 @@ const SplashScreen = ({ onComplete }) => {
             }}
             className="relative"
           >
-            <div className="w-32 h-32 bg-gradient-to-br from-sky-400 to-blue-600 rounded-full flex items-center justify-center backdrop-blur-lg border-4 border-sky-200 dark:border-sky-700 shadow-2xl">
-              <FaGlobe className="text-7xl text-white" />
+            <div 
+              className="w-28 h-28 sm:w-32 sm:h-32 bg-gradient-to-br from-sky-400 to-blue-600 rounded-full flex items-center justify-center backdrop-blur-lg border-4 border-sky-200 dark:border-sky-700 shadow-2xl"
+              style={{ boxShadow: '0 0 40px rgba(14, 165, 233, 0.5), 0 0 80px rgba(14, 165, 233, 0.2)' }}
+            >
+              <FaGlobe className="text-5xl sm:text-6xl text-white" />
             </div>
             
-            {/* Orbiting Icons */}
+            {/* Orbiting Icons - Subtle pulse instead of rotation */}
             <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-              className="absolute inset-0"
+              animate={{ opacity: [0.7, 1, 0.7], scale: [0.9, 1, 0.9] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute -top-3 left-1/2 -translate-x-1/2"
             >
-              <FaPlane className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 text-3xl text-sky-600 dark:text-sky-400" />
+              <FaPlane className="text-2xl sm:text-3xl text-sky-500 dark:text-sky-400" style={{ filter: 'drop-shadow(0 0 8px rgba(14, 165, 233, 0.6))' }} />
             </motion.div>
             
             <motion.div
-              animate={{ rotate: -360 }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-              className="absolute inset-0"
+              animate={{ opacity: [0.7, 1, 0.7], scale: [0.9, 1, 0.9] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+              className="absolute -bottom-3 left-1/2 -translate-x-1/2"
             >
-              <FaHotel className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-4 text-3xl text-blue-600 dark:text-blue-400" />
+              <FaHotel className="text-2xl sm:text-3xl text-blue-500 dark:text-blue-400" style={{ filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.6))' }} />
             </motion.div>
             
             <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
-              className="absolute inset-0"
+              animate={{ opacity: [0.7, 1, 0.7], scale: [0.9, 1, 0.9] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+              className="absolute top-1/2 -right-3 -translate-y-1/2"
             >
-              <FaMapMarkerAlt className="absolute top-1/2 right-0 translate-x-4 -translate-y-1/2 text-3xl text-rose-500 dark:text-rose-400" />
+              <FaMapMarkerAlt className="text-2xl sm:text-3xl text-rose-500 dark:text-rose-400" style={{ filter: 'drop-shadow(0 0 8px rgba(244, 63, 94, 0.6))' }} />
             </motion.div>
           </motion.div>
         </motion.div>

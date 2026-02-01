@@ -174,11 +174,28 @@ const HotelsList = () => {
                     )}
                   </div>
 
-                  {/* Availability */}
-                  <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Available Rooms: <span className="font-semibold text-gray-800 dark:text-white">{hotel.available_rooms}</span> / {hotel.total_rooms}
-                    </p>
+                  {/* Availability - REAL TIME from Booking.com */}
+                  <div className={`mb-4 p-3 rounded-lg ${hotel.is_limited ? 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800' : 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800'}`}>
+                    <div className="flex items-center gap-2">
+                      {hotel.is_limited ? (
+                        <>
+                          <span className="animate-pulse w-2 h-2 bg-red-500 rounded-full"></span>
+                          <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                            {hotel.rooms_left ? `Only ${hotel.rooms_left} rooms left!` : hotel.availability_status || 'Limited availability'}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                            {hotel.availability_status || 'Available'}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    {hotel.has_deal && (
+                      <p className="text-xs text-sky-600 dark:text-sky-400 mt-1">🏷️ {hotel.has_deal}</p>
+                    )}
                   </div>
 
                   {/* Pricing - Room Types from API */}

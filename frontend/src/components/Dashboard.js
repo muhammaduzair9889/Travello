@@ -131,54 +131,112 @@ const emergencyContacts = [
 
 // Map attractions data - Lahore, Pakistan
 const attractions = [
-  // Must See Attractions
-  { id: 1, name: 'Badshahi Mosque', lat: 31.5884, lng: 74.3105, category: 'Must See' },
-  { id: 2, name: 'Lahore Fort (Shahi Qila)', lat: 31.5880, lng: 74.3154, category: 'Must See' },
-  { id: 3, name: 'Minar-e-Pakistan', lat: 31.5925, lng: 74.3095, category: 'Must See' },
-  { id: 4, name: 'Lahore Museum', lat: 31.5656, lng: 74.3189, category: 'Must See' },
-  { id: 5, name: 'Shalimar Gardens', lat: 31.5875, lng: 74.3755, category: 'Must See' },
-  { id: 6, name: 'Wazir Khan Mosque', lat: 31.5825, lng: 74.3192, category: 'Must See' },
-  { id: 21, name: 'Data Darbar', lat: 31.5782, lng: 74.3131, category: 'Must See' },
-  { id: 22, name: 'Jahangir\'s Tomb', lat: 31.6206, lng: 74.2769, category: 'Must See' },
-  { id: 23, name: 'Tomb of Allama Iqbal', lat: 31.5883, lng: 74.3108, category: 'Must See' },
-  { id: 25, name: 'Lahore Zoo', lat: 31.5686, lng: 74.3205, category: 'Must See' },
-  { id: 26, name: 'Chauburji', lat: 31.5489, lng: 74.3247, category: 'Must See' },
-  { id: 27, name: 'Hazuri Bagh', lat: 31.5881, lng: 74.3121, category: 'Must See' },
-  { id: 28, name: 'Tomb of Nur Jahan', lat: 31.6213, lng: 74.2800, category: 'Must See' },
+  // ==================== MUST SEE ATTRACTIONS ====================
+  // Historical Landmarks & UNESCO Sites (GeoHack/Wikipedia Verified Coordinates)
+  { id: 1, name: 'Badshahi Mosque', lat: 31.588056, lng: 74.309444, category: 'Must See', description: 'Iconic Mughal-era mosque, one of the largest in the world' },
+  { id: 2, name: 'Lahore Fort (Shahi Qila)', lat: 31.587778, lng: 74.315, category: 'Must See', description: 'UNESCO World Heritage Site with stunning Mughal architecture' },
+  { id: 3, name: 'Minar-e-Pakistan', lat: 31.5925, lng: 74.309444, category: 'Must See', description: 'National monument commemorating Pakistan Resolution' },
+  { id: 4, name: 'Lahore Museum', lat: 31.5693, lng: 74.3107, category: 'Must See', description: 'Largest museum in Pakistan with rich cultural artifacts' },
+  { id: 5, name: 'Shalimar Gardens', lat: 31.585833, lng: 74.381944, category: 'Must See', description: 'UNESCO World Heritage Mughal garden complex' },
+  { id: 6, name: 'Wazir Khan Mosque', lat: 31.581944, lng: 74.321667, category: 'Must See', description: 'Famous for intricate tile work and calligraphy' },
+  { id: 7, name: 'Data Darbar', lat: 31.57, lng: 74.31, category: 'Must See', description: 'Shrine of Sufi saint Data Ganj Bakhsh' },
+  { id: 8, name: 'Jahangir\'s Tomb', lat: 31.620556, lng: 74.276944, category: 'Must See', description: 'Tomb of Mughal Emperor Jahangir in Shahdara' },
+  { id: 9, name: 'Tomb of Allama Iqbal', lat: 31.5883, lng: 74.3100, category: 'Must See', description: 'Mausoleum of Pakistan\'s national poet' },
+  { id: 10, name: 'Lahore Zoo', lat: 31.5573, lng: 74.3287, category: 'Must See', description: 'One of the largest zoos in South Asia' },
+  { id: 11, name: 'Chauburji', lat: 31.5397, lng: 74.3333, category: 'Must See', description: 'Historic Mughal-era gateway monument' },
+  { id: 12, name: 'Hazuri Bagh', lat: 31.5879, lng: 74.3107, category: 'Must See', description: 'Historic garden between Fort and Badshahi Mosque' },
+  { id: 13, name: 'Tomb of Nur Jahan', lat: 31.6210, lng: 74.2785, category: 'Must See', description: 'Tomb of Mughal Empress Nur Jahan' },
+  { id: 14, name: 'Sheesh Mahal (Mirror Palace)', lat: 31.5880, lng: 74.3155, category: 'Must See', description: 'Palace with stunning mirror work inside Lahore Fort' },
+  { id: 15, name: 'Samadhi of Ranjit Singh', lat: 31.5883, lng: 74.3097, category: 'Must See', description: 'Memorial of Sikh ruler Maharaja Ranjit Singh' },
+  { id: 16, name: 'Delhi Gate (Old Lahore)', lat: 31.5780, lng: 74.3210, category: 'Must See', description: 'Historic gate of the Walled City' },
+  { id: 17, name: 'Roshnai Gate', lat: 31.5870, lng: 74.3113, category: 'Must See', description: 'Gateway connecting old city to Hazuri Bagh' },
+  { id: 18, name: 'Lahore High Court', lat: 31.5580, lng: 74.3217, category: 'Must See', description: 'Beautiful colonial-era court building' },
+  { id: 19, name: 'Kim\'s Gun (Zamzama)', lat: 31.5692, lng: 74.3105, category: 'Must See', description: 'Historic cannon featured in Kipling\'s novel' },
+  { id: 20, name: 'Fakir Khana Museum', lat: 31.5768, lng: 74.3152, category: 'Must See', description: 'Private museum with rare art collection' },
+  { id: 21, name: 'Sunehri Masjid (Golden Mosque)', lat: 31.5788, lng: 74.3175, category: 'Must See', description: 'Mosque famous for golden domes' },
+  { id: 22, name: 'Masjid Mariyam Zamani', lat: 31.5877, lng: 74.3148, category: 'Must See', description: 'Mosque built by Emperor Jahangir\'s mother' },
+  { id: 23, name: 'Moti Masjid (Pearl Mosque)', lat: 31.5880, lng: 74.3152, category: 'Must See', description: 'Small white marble mosque in Lahore Fort' },
+  { id: 24, name: 'Anarkali Tomb', lat: 31.5567, lng: 74.3200, category: 'Must See', description: 'Historic tomb in Punjab Archives' },
+  { id: 25, name: 'General Post Office', lat: 31.5603, lng: 74.3163, category: 'Must See', description: 'Historic British-era post office building' },
   
-  // Food Destinations
-  { id: 7, name: 'Food Street Gawalmandi', lat: 31.5821, lng: 74.3220, category: 'Food' },
-  { id: 8, name: 'MM Alam Road Restaurants', lat: 31.5204, lng: 74.3487, category: 'Food' },
-  { id: 9, name: 'Lakshmi Chowk Food Street', lat: 31.5783, lng: 74.3142, category: 'Food' },
-  { id: 10, name: 'Anarkali Food Street', lat: 31.5590, lng: 74.3180, category: 'Food' },
-  { id: 11, name: 'Fort Road Food Street', lat: 31.5886, lng: 74.3167, category: 'Food' },
-  { id: 12, name: 'Yum Chinese Restaurant', lat: 31.4697, lng: 74.2728, category: 'Food' },
-  { id: 29, name: 'Butt Karahi Lakshmi', lat: 31.5791, lng: 74.3145, category: 'Food' },
-  { id: 30, name: 'Cafe Aylanto Gulberg', lat: 31.5212, lng: 74.3489, category: 'Food' },
-  { id: 31, name: 'Cooco\'s Den Restaurant', lat: 31.5820, lng: 74.3169, category: 'Food' },
-  { id: 32, name: 'Bundu Khan MM Alam', lat: 31.5204, lng: 74.3487, category: 'Food' },
-  { id: 33, name: 'Haveli Restaurant', lat: 31.5884, lng: 74.3147, category: 'Food' },
+  // ==================== FOOD DESTINATIONS ====================
+  // OpenStreetMap Verified Coordinates for Famous Lahore Food Spots
+  { id: 26, name: 'Food Street Gawalmandi', lat: 31.571997, lng: 74.318875, category: 'Food', description: 'Famous traditional food street with local delicacies' },
+  { id: 27, name: 'MM Alam Road', lat: 31.521359, lng: 74.351589, category: 'Food', description: 'Upscale dining destination with diverse cuisine' },
+  { id: 28, name: 'Lakshmi Chowk', lat: 31.567310, lng: 74.324761, category: 'Food', description: 'Iconic food hub for traditional Lahori dishes' },
+  { id: 29, name: 'Anarkali Food Street', lat: 31.562481, lng: 74.309333, category: 'Food', description: 'Historic bazaar area with street food' },
+  { id: 30, name: 'Fort Road Food Street', lat: 31.587249, lng: 74.311586, category: 'Food', description: 'Rooftop restaurants with fort view' },
+  { id: 31, name: 'Butt Karahi (Lakshmi Chowk)', lat: 31.5672, lng: 74.3243, category: 'Food', description: 'Legendary karahi restaurant since 1940s' },
+  { id: 32, name: 'Cafe Aylanto', lat: 31.5168757, lng: 74.3518081, category: 'Food', description: 'Premium Italian dining experience' },
+  { id: 33, name: 'Cooco\'s Den', lat: 31.5870545, lng: 74.3115511, category: 'Food', description: 'Unique rooftop dining with traditional ambiance' },
+  { id: 34, name: 'Bundu Khan (MM Alam)', lat: 31.5213, lng: 74.3512, category: 'Food', description: 'Famous for BBQ and traditional Pakistani food' },
+  { id: 35, name: 'Haveli Restaurant', lat: 31.5870129, lng: 74.3114255, category: 'Food', description: 'Rooftop dining overlooking Badshahi Mosque' },
+  { id: 36, name: 'Andaaz Restaurant', lat: 31.5871, lng: 74.3112, category: 'Food', description: 'Traditional cuisine with historic views' },
+  { id: 37, name: 'Salt\'n Pepper Village', lat: 31.4683, lng: 74.2648, category: 'Food', description: 'Village-themed restaurant chain' },
+  { id: 38, name: 'Monal Lahore', lat: 31.5097528, lng: 74.3410388, category: 'Food', description: 'Premium dining with panoramic city views' },
+  { id: 39, name: 'Phajja Siri Paye', lat: 31.5852863, lng: 74.3125410, category: 'Food', description: 'Famous for traditional siri paye breakfast' },
+  { id: 40, name: 'Bashir Dar-ul-Mahi', lat: 31.5118, lng: 74.3453, category: 'Food', description: 'Legendary fish restaurant since 1950' },
+  { id: 41, name: 'Peeru\'s Cafe', lat: 31.4122864, lng: 74.2327037, category: 'Food', description: 'Heritage cafe in an art gallery setting' },
+  { id: 42, name: 'Cosa Nostra', lat: 31.4609448, lng: 74.4136984, category: 'Food', description: 'Italian pizzeria with authentic flavors' },
+  { id: 43, name: 'Nafees Bakers', lat: 31.5117, lng: 74.3445, category: 'Food', description: 'Traditional sweets and savory items since 1964' },
+  { id: 44, name: 'Waris Nihari (Walled City)', lat: 31.5824, lng: 74.3205, category: 'Food', description: 'Famous for authentic Nihari dish' },
+  { id: 45, name: 'Yummy 36 Paye', lat: 31.5783, lng: 74.3142, category: 'Food', description: 'Popular late-night paye destination' },
+  // Additional Famous Food Points
+  { id: 46, name: 'Heera Mandi Food Area', lat: 31.5865, lng: 74.3120, category: 'Food', description: 'Traditional food area near Badshahi Mosque' },
+  { id: 47, name: 'Muhammadi Nihari (Anarkali)', lat: 31.5623, lng: 74.3095, category: 'Food', description: 'Famous nihari joint since 1965' },
+  { id: 48, name: 'Fazal-e-Haq Paye', lat: 31.5672, lng: 74.3241, category: 'Food', description: 'Popular for breakfast siri paye' },
+  { id: 49, name: 'Tayeb Kabab House', lat: 31.5671, lng: 74.3239, category: 'Food', description: 'Famous for seekh kababs and tikka' },
+  { id: 50, name: 'Cuckoo\'s Cafe (Liberty)', lat: 31.5113, lng: 74.3447, category: 'Food', description: 'Trendy cafe with fusion food' },
+  { id: 51, name: 'Nishat Hotel (Cinema Chowk)', lat: 31.5625, lng: 74.3128, category: 'Food', description: 'Historic halwa puri breakfast spot' },
+  { id: 52, name: 'Khalifa Bakers (Mall Road)', lat: 31.5641, lng: 74.3133, category: 'Food', description: 'Famous bakery since 1919' },
+  { id: 53, name: 'Haji Sahab Haleem Wala', lat: 31.5624, lng: 74.3097, category: 'Food', description: 'Best haleem in Lahore since decades' },
+  { id: 54, name: 'Sadiq Halwa Puri (Iqbal Town)', lat: 31.5201583, lng: 74.2911526, category: 'Food', description: 'Famous breakfast destination' },
+  { id: 55, name: 'Arcadian Cafe', lat: 31.5226637, lng: 74.3495417, category: 'Food', description: 'Modern cafe with continental food' },
+  { id: 56, name: 'Mughalia Restaurant', lat: 31.5872, lng: 74.3110, category: 'Food', description: 'Traditional Mughlai cuisine near Fort' },
+  { id: 57, name: 'Cafe Zouk', lat: 31.5203649, lng: 74.3516633, category: 'Food', description: 'Popular cafe chain with diverse menu' },
+  { id: 58, name: 'X2 (MM Alam)', lat: 31.5205, lng: 74.3508, category: 'Food', description: 'Modern restaurant with live music' },
+  { id: 59, name: 'Howdy Cafe (Gulberg)', lat: 31.5168, lng: 74.3478, category: 'Food', description: 'American-style burgers and shakes' },
+  { id: 60, name: 'Gun Smoke (DHA)', lat: 31.4785, lng: 74.4082, category: 'Food', description: 'Western BBQ and steakhouse' },
+  { id: 61, name: 'Zakir Tikka (Model Town)', lat: 31.4750243, lng: 74.3053249, category: 'Food', description: 'Famous tikka boti since 1972' },
+  { id: 62, name: 'Fazal-e-Haq Shinwari (GT Road)', lat: 31.5932, lng: 74.3043, category: 'Food', description: 'Authentic Shinwari karahi' },
+  { id: 63, name: 'Faisal Broast (Garden Town)', lat: 31.5082751, lng: 74.3232818, category: 'Food', description: 'Famous fried chicken since 1990' },
+  { id: 64, name: 'Malik Nihari (Mozang)', lat: 31.5537450, lng: 74.3141492, category: 'Food', description: 'Historic nihari spot' },
+  { id: 65, name: 'Sheikh Abdul Ghani Paratha', lat: 31.5672, lng: 74.3245, category: 'Food', description: 'Legendary paratha at Lakshmi Chowk' },
   
-  // Shopping Areas
-  { id: 13, name: 'Liberty Market', lat: 31.5088, lng: 74.3428, category: 'Shopping' },
-  { id: 14, name: 'Anarkali Bazaar', lat: 31.5625, lng: 74.3195, category: 'Shopping' },
-  { id: 15, name: 'Packages Mall', lat: 31.4717, lng: 74.3558, category: 'Shopping' },
-  { id: 16, name: 'Emporium Mall', lat: 31.4680, lng: 74.2664, category: 'Shopping' },
-  { id: 17, name: 'Fortress Stadium', lat: 31.5318, lng: 74.3687, category: 'Shopping' },
-  { id: 18, name: 'Pace Shopping Mall Gulberg', lat: 31.5123, lng: 74.3530, category: 'Shopping' },
-  { id: 34, name: 'Gulberg Main Market', lat: 31.5204, lng: 74.3487, category: 'Shopping' },
-  { id: 35, name: 'Mall Road Shopping', lat: 31.5656, lng: 74.3189, category: 'Shopping' },
-  { id: 36, name: 'Xinhua Mall Liberty', lat: 31.5088, lng: 74.3428, category: 'Shopping' },
+  // ==================== SHOPPING AREAS ====================
+  // OpenStreetMap Verified Coordinates
+  { id: 66, name: 'Liberty Market', lat: 31.511280, lng: 74.345008, category: 'Shopping', description: 'Popular market for clothes and accessories' },
+  { id: 67, name: 'Anarkali Bazaar', lat: 31.562481, lng: 74.309333, category: 'Shopping', description: 'Historic bazaar with traditional items' },
+  { id: 68, name: 'Packages Mall', lat: 31.4711831, lng: 74.3560264, category: 'Shopping', description: 'Modern shopping mall with entertainment' },
+  { id: 69, name: 'Emporium Mall', lat: 31.4671890, lng: 74.2659803, category: 'Shopping', description: 'Largest mall in Pakistan with luxury brands' },
+  { id: 70, name: 'Fortress Stadium', lat: 31.5317842, lng: 74.3660636, category: 'Shopping', description: 'Shopping and entertainment complex' },
+  { id: 71, name: 'Pace Shopping Mall', lat: 31.5158879, lng: 74.3520254, category: 'Shopping', description: 'Modern mall in Gulberg area' },
+  { id: 72, name: 'Gulberg Main Market', lat: 31.53055, lng: 74.36112, category: 'Shopping', description: 'Central market in Gulberg' },
+  { id: 73, name: 'Mall Road', lat: 31.5555364, lng: 74.3321938, category: 'Shopping', description: 'Historic shopping street from colonial era' },
+  { id: 74, name: 'Ichra Bazaar', lat: 31.5329591, lng: 74.3183969, category: 'Shopping', description: 'Busy wholesale market for clothes' },
+  { id: 75, name: 'Shah Alam Market', lat: 31.5778376, lng: 74.3178981, category: 'Shopping', description: 'Large wholesale cloth market' },
+  { id: 76, name: 'Azam Cloth Market', lat: 31.5840475, lng: 74.3208779, category: 'Shopping', description: 'Famous for fabric and textiles' },
+  { id: 77, name: 'Urdu Bazaar', lat: 31.5749997, lng: 74.3096226, category: 'Shopping', description: 'Largest book market in Pakistan' },
+  { id: 78, name: 'Hall Road Electronics', lat: 31.5640804, lng: 74.3187403, category: 'Shopping', description: 'Electronics and computer market' },
+  { id: 79, name: 'Hafeez Centre', lat: 31.5160698, lng: 74.3429861, category: 'Shopping', description: 'IT and electronics shopping hub' },
+  { id: 80, name: 'DHA Y Block Market', lat: 31.4673316, lng: 74.4333092, category: 'Shopping', description: 'Upscale market in DHA' },
   
-  // Adventure/Parks
-  { id: 19, name: 'Jilani Park (Racecourse)', lat: 31.5134, lng: 74.3393, category: 'Adventure' },
-  { id: 20, name: 'Jallo Park', lat: 31.5737, lng: 74.4772, category: 'Adventure' },
-  { id: 37, name: 'Lahore Canal Bank', lat: 31.5204, lng: 74.3489, category: 'Adventure' },
-  { id: 38, name: 'Model Town Park', lat: 31.4843, lng: 74.3150, category: 'Adventure' },
-  { id: 39, name: 'Greater Iqbal Park', lat: 31.5928, lng: 74.3093, category: 'Adventure' },
-  { id: 40, name: 'Lawrence Gardens (Bagh-e-Jinnah)', lat: 31.5686, lng: 74.3205, category: 'Adventure' },
-  { id: 41, name: 'Sozo Water Park', lat: 31.5815, lng: 74.4855, category: 'Adventure' },
-  { id: 42, name: 'Joyland', lat: 31.5334, lng: 74.3638, category: 'Adventure' },
+  // ==================== ADVENTURE & PARKS ====================
+  { id: 81, name: 'Jilani Park (Racecourse)', lat: 31.5095, lng: 74.3360, category: 'Adventure', description: 'Large recreational park with lake' },
+  { id: 82, name: 'Jallo Park', lat: 31.5717696, lng: 74.4745342, category: 'Adventure', description: 'Wildlife park and recreational forest' },
+  { id: 83, name: 'Greater Iqbal Park', lat: 31.5924791, lng: 74.3094765, category: 'Adventure', description: 'Renovated park with fountains and rides' },
+  { id: 84, name: 'Lawrence Gardens (Bagh-e-Jinnah)', lat: 31.5523964, lng: 74.3288503, category: 'Adventure', description: 'Historic botanical gardens' },
+  { id: 85, name: 'Sozo Water Park', lat: 31.5813007, lng: 74.4868904, category: 'Adventure', description: 'Water theme park with rides' },
+  { id: 86, name: 'Joyland', lat: 31.5323582, lng: 74.3631271, category: 'Adventure', description: 'Popular amusement park' },
+  { id: 87, name: 'Model Town Park', lat: 31.4846361, lng: 74.3262319, category: 'Adventure', description: 'Green recreational space' },
+  { id: 88, name: 'Gaddafi Stadium', lat: 31.5133615, lng: 74.3334644, category: 'Adventure', description: 'International cricket stadium' },
+  { id: 89, name: 'National Hockey Stadium', lat: 31.5111075, lng: 74.3351685, category: 'Adventure', description: 'International hockey venue' },
+  { id: 90, name: 'Lahore Gymkhana', lat: 31.5351392, lng: 74.3546905, category: 'Adventure', description: 'Historic sports and social club' },
+  { id: 91, name: 'Safari Park (Wildlife Park)', lat: 31.5746415, lng: 74.4754935, category: 'Adventure', description: 'Safari experience with wildlife' },
+  { id: 92, name: 'Lahore Golf Club', lat: 31.4689395, lng: 74.4715513, category: 'Adventure', description: 'Premier golf course' },
+  { id: 93, name: 'Royal Palm Golf & Country Club', lat: 31.4665, lng: 74.4245, category: 'Adventure', description: 'Luxury golf resort' },
+  { id: 94, name: 'Gulshan-e-Iqbal Park', lat: 31.5139069, lng: 74.2890468, category: 'Adventure', description: 'Neighborhood park with jogging track' },
+  { id: 95, name: 'Askari Park', lat: 31.4653340, lng: 74.3801628, category: 'Adventure', description: 'Family-friendly park' },
 ];
 
 // Smart Packing Checklist Widget
@@ -413,11 +471,54 @@ const SOSToolkitWidget = () => {
 // Interactive Map Component
 const InteractiveMap = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [userLocation, setUserLocation] = useState({ lat: 31.5497, lng: 74.3436 });
   const categories = ['All', 'Must See', 'Food', 'Shopping', 'Adventure'];
+
+  // Get user's current location for better navigation
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        () => {
+          // Default to Lahore center if geolocation fails
+          console.log('Using default Lahore location');
+        }
+      );
+    }
+  }, []);
 
   const filteredAttractions = selectedCategory === 'All'
     ? attractions
     : attractions.filter(a => a.category === selectedCategory);
+
+  // Open Google Maps navigation
+  const openGoogleMapsNavigation = (attraction) => {
+    const destination = `${attraction.lat},${attraction.lng}`;
+    const origin = `${userLocation.lat},${userLocation.lng}`;
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+    window.open(googleMapsUrl, '_blank');
+  };
+
+  // Get category color
+  const getCategoryColor = (category) => {
+    switch (category) {
+      case 'Must See':
+        return 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400';
+      case 'Food':
+        return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400';
+      case 'Shopping':
+        return 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400';
+      case 'Adventure':
+        return 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400';
+      default:
+        return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400';
+    }
+  };
 
   return (
     <motion.div
@@ -462,10 +563,10 @@ const InteractiveMap = () => {
           />
           
           {/* User Location */}
-          <Marker position={[31.5497, 74.3436]}>
+          <Marker position={[userLocation.lat, userLocation.lng]}>
             <Popup>
-              <div className="text-center">
-                <p className="font-semibold">Your Location</p>
+              <div className="text-center p-1">
+                <p className="font-semibold text-gray-800">📍 Your Location</p>
                 <p className="text-xs text-gray-600">Lahore, Pakistan</p>
               </div>
             </Popup>
@@ -475,14 +576,57 @@ const InteractiveMap = () => {
           {filteredAttractions.map((attraction) => (
             <Marker key={attraction.id} position={[attraction.lat, attraction.lng]}>
               <Popup>
-                <div className="text-center">
-                  <p className="font-semibold">{attraction.name}</p>
-                  <p className="text-xs text-blue-600">{attraction.category}</p>
+                <div className="min-w-[200px] p-1">
+                  {/* Location Name */}
+                  <h4 className="font-bold text-gray-800 text-base mb-1">
+                    {attraction.name}
+                  </h4>
+                  
+                  {/* Category Badge */}
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2 ${getCategoryColor(attraction.category)}`}>
+                    {attraction.category}
+                  </span>
+                  
+                  {/* Description */}
+                  {attraction.description && (
+                    <p className="text-xs text-gray-600 mb-3 leading-relaxed">
+                      {attraction.description}
+                    </p>
+                  )}
+                  
+                  {/* View Navigation Button */}
+                  <button
+                    onClick={() => openGoogleMapsNavigation(attraction)}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <FaMapMarkerAlt className="text-xs" />
+                    View Navigation
+                  </button>
                 </div>
               </Popup>
             </Marker>
           ))}
         </MapContainer>
+      </div>
+
+      {/* Legend */}
+      <div className="mt-4 flex flex-wrap gap-3">
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-red-500"></span>
+          <span className="text-xs text-gray-600 dark:text-gray-400">Must See</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-orange-500"></span>
+          <span className="text-xs text-gray-600 dark:text-gray-400">Food</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-purple-500"></span>
+          <span className="text-xs text-gray-600 dark:text-gray-400">Shopping</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-green-500"></span>
+          <span className="text-xs text-gray-600 dark:text-gray-400">Adventure</span>
+        </div>
       </div>
     </motion.div>
   );
@@ -640,6 +784,7 @@ const Dashboard = () => {
     } else if (activeFeature === 'My Bookings') {
       fetchBookings();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFeature]);
 
   const applyHotelFilters = (list) => {
@@ -659,8 +804,12 @@ const Dashboard = () => {
         ? (hotel.room_types || []).some((rt) => rt.type === roomType)
         : true;
 
+      // For scraped hotels, always return true (they're available if they came from Booking.com)
+      // For database hotels, check available_rooms
       const matchesDates = hasDateFilter
-        ? Number(hotel.available_rooms ?? hotel.total_rooms ?? 0) > 0
+        ? (hotel.is_scraped || hotel.scraped_data) 
+          ? true 
+          : Number(hotel.available_rooms ?? hotel.total_rooms ?? 1) > 0
         : true;
 
       return matchesDestination && matchesRoomType && matchesDates;
@@ -813,187 +962,21 @@ const Dashboard = () => {
 
   const handleSearchHotels = async (e) => {
     e.preventDefault();
-    setFiltersActive(true);
-    setRoomTypeTouched(true);
-    setLoadingHotels(true);
     
-    try {
-      const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      
-      console.log('🔍 Scraping hotels with params:', {
-        destination,
-        checkIn,
-        checkOut,
+    // Navigate to the new search results page with search parameters
+    navigate('/hotels/search-results', {
+      state: {
+        destination: destination || 'Lahore',
+        checkIn: checkIn,
+        checkOut: checkOut,
         adults: parseInt(adults),
         children: parseInt(children),
-        roomType
-      });
-      
-      // Call web scraping API
-      const response = await fetch(`http://localhost:8000/api/scraper/scrape-hotels/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          city: destination || 'Lahore',
-          checkin: checkIn,
-          checkout: checkOut,
-          adults: parseInt(adults),
-          rooms: 1,
-          children: parseInt(children),
-          use_cache: true
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success && data.hotels && data.hotels.length > 0) {
-        console.log('✅ Scraped hotels:', data.count, 'hotels');
-        
-        // Transform scraped data to match your hotel format - WITH DYNAMIC AVAILABILITY
-        const transformedHotels = data.hotels.map((hotel, index) => {
-          // Extract price from hotel data
-          const pricePerNight = hotel.price ? parseFloat(hotel.price.replace(/[^0-9.]/g, '')) || 5000 : 5000;
-          
-          // Generate realistic availability based on hotel rating and price
-          const generateAvailability = (rating, basePrice) => {
-            // Higher rated/priced hotels tend to have fewer available rooms
-            const ratingFactor = parseFloat(rating) || 7.5;
-            const priceFactor = basePrice > 15000 ? 0.6 : basePrice > 10000 ? 0.75 : 0.9;
-            
-            // Total rooms based on hotel tier
-            const totalRooms = basePrice > 15000 ? 50 : basePrice > 10000 ? 40 : basePrice > 7000 ? 35 : 30;
-            
-            // Available rooms: popular hotels (high rating) have less availability
-            const availabilityRate = ratingFactor > 8.5 ? 0.5 : ratingFactor > 8.0 ? 0.65 : 0.8;
-            const availableRooms = Math.round(totalRooms * availabilityRate * priceFactor);
-            
-            return { totalRooms, availableRooms };
-          };
-          
-          const { totalRooms, availableRooms } = generateAvailability(hotel.rating, pricePerNight);
-          
-          // Create multiple room types with varied pricing and availability
-          const createRoomTypes = () => {
-            const basePrice = pricePerNight;
-            const roomAvailability = Math.max(3, Math.floor(availableRooms / 4)); // Distribute availability
-            
-            return [
-              {
-                id: `${index}-single`,
-                type: 'single',
-                price_per_night: Math.round(basePrice * 0.8), // 20% less
-                capacity: 1,
-                available_rooms: Math.max(2, Math.floor(roomAvailability * 1.2)),
-                total_rooms: Math.floor(totalRooms * 0.3),
-                description: hotel.amenities?.slice(0, 2).join(', ') || 'Standard amenities',
-                amenities: hotel.amenities || []
-              },
-              {
-                id: `${index}-double`,
-                type: 'double',
-                price_per_night: basePrice,
-                capacity: 2,
-                available_rooms: roomAvailability,
-                total_rooms: Math.floor(totalRooms * 0.4),
-                description: hotel.amenities?.slice(0, 3).join(', ') || 'Standard amenities',
-                amenities: hotel.amenities || []
-              },
-              {
-                id: `${index}-triple`,
-                type: 'triple',
-                price_per_night: Math.round(basePrice * 1.3), // 30% more
-                capacity: 3,
-                available_rooms: Math.max(1, Math.floor(roomAvailability * 0.8)),
-                total_rooms: Math.floor(totalRooms * 0.2),
-                description: hotel.amenities?.slice(0, 4).join(', ') || 'Standard amenities',
-                amenities: hotel.amenities || []
-              },
-              {
-                id: `${index}-quad`,
-                type: 'quad',
-                price_per_night: Math.round(basePrice * 1.5), // 50% more
-                capacity: 4,
-                available_rooms: Math.max(1, Math.floor(roomAvailability * 0.6)),
-                total_rooms: Math.floor(totalRooms * 0.1),
-                description: hotel.amenities?.join(', ') || 'Standard amenities',
-                amenities: hotel.amenities || []
-              }
-            ];
-          };
-          
-          return {
-            id: `scraped-${index}`,
-            name: hotel.name || 'Hotel',
-            hotel_name: hotel.name || 'Hotel', // For booking page compatibility
-            city: destination || data.search_params?.city || 'Lahore',
-            address: hotel.location || hotel.distance || '',
-            location: hotel.location || hotel.distance || '', // For booking page compatibility
-            description: `${hotel.amenities?.join(', ') || 'No amenities listed'}`,
-            rating: parseFloat(hotel.rating) || 0,
-            total_rooms: totalRooms,
-            available_rooms: availableRooms,
-            room_types: createRoomTypes(),
-            image: hotel.image_url || 'https://via.placeholder.com/400x300?text=Hotel',
-            scraped_data: hotel,
-            review_count: hotel.review_count || '0 reviews',
-            distance_from_center: hotel.distance || '',
-            check_in_instructions: hotel.check_in_instructions || 'Standard check-in: 2 PM',
-            policies: hotel.policies || 'Free cancellation 24 hours before check-in',
-            wifi_available: hotel.amenities?.some(a => a.toLowerCase().includes('wifi')) || false,
-            parking_available: hotel.amenities?.some(a => a.toLowerCase().includes('parking')) || false,
-            // Add pricing fields for booking compatibility
-            single_bed_price_per_day: Math.round(pricePerNight * 0.8),
-            double_bed_price_per_day: pricePerNight,
-            triple_bed_price_per_day: Math.round(pricePerNight * 1.3),
-            quad_bed_price_per_day: Math.round(pricePerNight * 1.5),
-            is_scraped: true
-          };
-        });
-        
-        setHotels(transformedHotels);
-        setFilteredHotels(transformedHotels);
-        console.log('✅ Hotels displayed successfully');
-      } else {
-        console.warn('⚠️ No hotels found:', data.message);
-        
-        // Fallback to database hotels if scraping fails or returns no results
-        console.log('📦 Falling back to database hotels...');
-        const dbResponse = await hotelAPI.getAllHotels();
-        const dbHotels = dbResponse.data || [];
-        setHotels(dbHotels);
-        const base = applyHotelFilters(dbHotels);
-        const finalList = checkIn && checkOut && roomType ? await filterByAvailability(base) : base;
-        setFilteredHotels(finalList);
-        
-        if (data.message) {
-          alert(`Scraping info: ${data.message}\n\nShowing available hotels from database.`);
-        }
+        infants: parseInt(infants),
+        roomType: roomType
       }
-      
-    } catch (error) {
-      console.error('❌ Error during hotel search:', error);
-      
-      // Fallback to database on error
-      try {
-        console.log('📦 Falling back to database hotels due to error...');
-        const dbResponse = await hotelAPI.getAllHotels();
-        const dbHotels = dbResponse.data || [];
-        setHotels(dbHotels);
-        const base = applyHotelFilters(dbHotels);
-        const finalList = checkIn && checkOut && roomType ? await filterByAvailability(base) : base;
-        setFilteredHotels(finalList);
-        
-        alert('Scraping unavailable. Showing hotels from database.\n\nTip: Make sure Django server is running on port 8000.');
-      } catch (dbError) {
-        console.error('❌ Database fallback also failed:', dbError);
-        setFilteredHotels([]);
-        alert('Unable to fetch hotels. Please ensure the backend server is running.');
-      }
-    } finally {
-      setLoadingHotels(false);
-    }
+    });
+    
+    // Navigation to hotels page handles the search
   };
 
   const handleBookRoom = (hotel, roomType) => {
@@ -1043,6 +1026,7 @@ const Dashboard = () => {
     };
     reapply();
     return () => { isMounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hotels, filtersActive, destination, roomType, roomTypeTouched, checkIn, checkOut]);
 
   return (
@@ -1360,11 +1344,15 @@ const Dashboard = () => {
                             {/* Review Count & Distance for scraped hotels */}
                             {hotel.scraped_data && (
                               <div className="flex flex-col gap-1 mb-3">
-                                {hotel.review_count && (
+                                {hotel.review_count ? (
                                   <div className="text-xs text-gray-500 dark:text-gray-400">
                                     📝 {hotel.review_count}
                                   </div>
-                                )}
+                                ) : hotel.rating > 0 ? (
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    ⭐ Rated {hotel.rating.toFixed(1)}/10
+                                  </div>
+                                ) : null}
                                 {hotel.distance_from_center && (
                                   <div className="text-xs text-gray-500 dark:text-gray-400">
                                     📍 {hotel.distance_from_center}
@@ -1412,11 +1400,28 @@ const Dashboard = () => {
                               )}
                             </div>
 
-                            {/* Availability */}
-                            <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Available Rooms: <span className="font-semibold text-gray-800 dark:text-white">{hotel.available_rooms}</span> / {hotel.total_rooms}
-                              </p>
+                            {/* Availability - REAL TIME from Booking.com */}
+                            <div className={`mb-4 p-3 rounded-lg ${hotel.is_limited ? 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800' : 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800'}`}>
+                              <div className="flex items-center gap-2">
+                                {hotel.is_limited ? (
+                                  <>
+                                    <span className="animate-pulse w-2 h-2 bg-red-500 rounded-full"></span>
+                                    <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                                      {hotel.rooms_left ? `Only ${hotel.rooms_left} rooms left!` : hotel.availability_status || 'Limited availability'}
+                                    </p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                    <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                                      {hotel.availability_status || 'Available'}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                              {hotel.has_deal && (
+                                <p className="text-xs text-sky-600 dark:text-sky-400 mt-1">🏷️ {hotel.has_deal}</p>
+                              )}
                             </div>
 
                             {/* Pricing - Room Types */}
