@@ -259,42 +259,53 @@ const PackingChecklistWidget = () => {
   };
 
   const completedCount = checklist.filter(item => item.checked).length;
+  const progressPercent = (completedCount / checklist.length) * 100;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+      className="card p-6"
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-sky-100 dark:bg-sky-900/30 rounded-xl flex items-center justify-center">
-            <Luggage className="w-6 h-6 text-sky-600 dark:text-sky-400" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-accent-100 dark:bg-accent-900/30 rounded-xl flex items-center justify-center">
+            <Luggage className="w-6 h-6 text-accent-600 dark:text-accent-400" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white">Smart Packing Checklist</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white font-display">Smart Packing Checklist</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">{completedCount}/{checklist.length} items packed</p>
           </div>
         </div>
       </div>
 
-      <div className="space-y-2 mb-4">
+      {/* Progress Bar */}
+      <div className="mb-6">
+        <div className="h-2 bg-gray-100 dark:bg-surface-700 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-accent-500 to-primary-500 rounded-full transition-all duration-500"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2 mb-6">
         {checklist.map((item) => (
           <motion.div
             key={item.id}
-            whileHover={{ scale: 1.02 }}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all cursor-pointer"
+            whileHover={{ scale: 1.01 }}
+            className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-surface-800 transition-all cursor-pointer border border-transparent hover:border-gray-200 dark:hover:border-surface-700"
             onClick={() => toggleItem(item.id)}
           >
-            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
               item.checked 
-                ? 'bg-sky-600 border-sky-600' 
-                : 'border-gray-300 dark:border-gray-600'
+                ? 'bg-accent-500 border-accent-500' 
+                : 'border-gray-300 dark:border-surface-600'
             }`}>
-              {item.checked && <FaCheckCircle className="text-white text-xs" />}
+              {item.checked && <FaCheckCircle className="text-white text-sm" />}
             </div>
-            <span className={`flex-1 text-sm ${
+            <span className={`flex-1 text-sm font-medium ${
               item.checked 
                 ? 'text-gray-400 dark:text-gray-500 line-through' 
                 : 'text-gray-700 dark:text-gray-300'
@@ -308,7 +319,7 @@ const PackingChecklistWidget = () => {
       <button
         onClick={generatePackingList}
         disabled={isGenerating}
-        className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn-accent w-full"
       >
         {isGenerating ? 'Generating...' : 'Generate New List'}
       </button>
@@ -325,35 +336,35 @@ const TravelJournalWidget = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 }}
-      className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+      className="card p-6"
     >
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
-          <Notebook className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center">
+          <Notebook className="w-6 h-6 text-primary-600 dark:text-primary-400" />
         </div>
-        <h3 className="text-lg font-bold text-gray-800 dark:text-white">Travel Journal</h3>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white font-display">Travel Journal</h3>
       </div>
 
-      <div className="space-y-3 mb-4">
+      <div className="space-y-3 mb-6">
         {journalEntries.map((entry) => (
           <motion.div
             key={entry.id}
-            whileHover={{ scale: 1.02 }}
-            className="p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-all cursor-pointer"
+            whileHover={{ scale: 1.01 }}
+            className="p-4 rounded-xl border border-gray-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-soft transition-all cursor-pointer bg-gray-50/50 dark:bg-surface-800/50"
           >
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-2">
               <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-xs text-gray-500 dark:text-gray-400">{entry.date}</span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{entry.date}</span>
             </div>
-            <h4 className="text-sm font-semibold text-gray-800 dark:text-white mb-1">{entry.title}</h4>
-            <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{entry.excerpt}</p>
+            <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">{entry.title}</h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{entry.excerpt}</p>
           </motion.div>
         ))}
       </div>
 
       <button
         onClick={() => navigate('/journal')}
-        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+        className="btn-primary w-full"
       >
         View All Entries
       </button>
@@ -378,28 +389,30 @@ const SOSToolkitWidget = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.2 }}
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+        className="card p-6"
       >
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center">
-            <Shield className="w-6 h-6 text-red-600 dark:text-red-400" />
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 bg-danger-100 dark:bg-danger-900/30 rounded-xl flex items-center justify-center">
+            <Shield className="w-6 h-6 text-danger-600 dark:text-danger-400" />
           </div>
-          <h3 className="text-lg font-bold text-gray-800 dark:text-white">SOS Safety Toolkit</h3>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white font-display">SOS Safety Toolkit</h3>
         </div>
 
-        <div className="space-y-2 mb-4">
+        <div className="space-y-2 mb-6">
           {emergencyContacts.map((contact, idx) => (
             <div
               key={idx}
-              className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50"
+              className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-surface-800 border border-gray-100 dark:border-surface-700"
             >
-              <div className="flex items-center gap-2">
-                <contact.icon className="text-red-600 dark:text-red-400" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{contact.name}</span>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-danger-100 dark:bg-danger-900/30 rounded-lg flex items-center justify-center">
+                  <contact.icon className="text-danger-600 dark:text-danger-400" />
+                </div>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{contact.name}</span>
               </div>
               <a
                 href={`tel:${contact.number}`}
-                className="text-sm font-semibold text-red-600 dark:text-red-400 hover:underline"
+                className="px-4 py-2 bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400 rounded-lg font-bold hover:bg-danger-200 dark:hover:bg-danger-900/50 transition-colors"
               >
                 {contact.number}
               </a>
@@ -407,17 +420,17 @@ const SOSToolkitWidget = () => {
           ))}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button
             onClick={() => setShowTranslateModal(true)}
-            className="flex-1 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            className="btn-secondary flex-1"
           >
             <FaLanguage />
             Quick Translate
           </button>
           <button
             onClick={() => alert('🚨 Emergency services will be contacted! Stay calm and provide your location.')}
-            className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            className="btn-danger flex-1"
           >
             <FaExclamationTriangle />
             SOS
@@ -439,24 +452,24 @@ const SOSToolkitWidget = () => {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 max-w-md w-full"
+              className="bg-white dark:bg-surface-900 rounded-2xl shadow-soft-xl p-6 max-w-md w-full border border-gray-200 dark:border-surface-700"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white">Common Phrases (Spanish)</h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white font-display">Common Phrases (Spanish)</h3>
                 <button
                   onClick={() => setShowTranslateModal(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-surface-800 rounded-lg transition-colors"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-3">
                 {commonPhrases.map((phrase, idx) => (
-                  <div key={idx} className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-                    <p className="text-sm font-medium text-gray-800 dark:text-white mb-1">{phrase.english}</p>
-                    <p className="text-sm text-blue-600 dark:text-blue-400">{phrase.translated}</p>
+                  <div key={idx} className="p-4 rounded-xl bg-gray-50 dark:bg-surface-800 border border-gray-100 dark:border-surface-700">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{phrase.english}</p>
+                    <p className="text-sm text-primary-600 dark:text-primary-400">{phrase.translated}</p>
                   </div>
                 ))}
               </div>
@@ -508,15 +521,15 @@ const InteractiveMap = () => {
   const getCategoryColor = (category) => {
     switch (category) {
       case 'Must See':
-        return 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400';
+        return 'text-danger-600 bg-danger-100 dark:bg-danger-900/30 dark:text-danger-400';
       case 'Food':
-        return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400';
+        return 'text-warning-600 bg-warning-100 dark:bg-warning-900/30 dark:text-warning-400';
       case 'Shopping':
         return 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400';
       case 'Adventure':
-        return 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400';
+        return 'text-success-600 bg-success-100 dark:bg-success-900/30 dark:text-success-400';
       default:
-        return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400';
+        return 'text-primary-600 bg-primary-100 dark:bg-primary-900/30 dark:text-primary-400';
     }
   };
 
@@ -525,29 +538,29 @@ const InteractiveMap = () => {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.4 }}
-      className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+      className="card p-6"
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
-            <MapPin className="w-6 h-6 text-green-600 dark:text-green-400" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-success-100 dark:bg-success-900/30 rounded-xl flex items-center justify-center">
+            <MapPin className="w-6 h-6 text-success-600 dark:text-success-400" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white">Explore Nearby</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white font-display">Explore Nearby</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">{filteredAttractions.length} attractions</p>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-6">
         {categories.map((category) => (
           <button
             key={category}
             onClick={() => setSelectedCategory(category)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`chip ${
               selectedCategory === category
-                ? 'bg-sky-600 text-white shadow-md'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ? 'chip-selected'
+                : 'chip-default'
             }`}
           >
             {category}
@@ -555,7 +568,7 @@ const InteractiveMap = () => {
         ))}
       </div>
 
-      <div className="rounded-xl overflow-hidden h-[500px] border border-gray-200 dark:border-gray-600">
+      <div className="rounded-2xl overflow-hidden h-[500px] border border-gray-200 dark:border-surface-700">
         <MapContainer center={[31.5497, 74.3436]} zoom={12} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -597,7 +610,7 @@ const InteractiveMap = () => {
                   {/* View Navigation Button */}
                   <button
                     onClick={() => openGoogleMapsNavigation(attraction)}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     <FaMapMarkerAlt className="text-xs" />
                     View Navigation
@@ -610,22 +623,22 @@ const InteractiveMap = () => {
       </div>
 
       {/* Legend */}
-      <div className="mt-4 flex flex-wrap gap-3">
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-red-500"></span>
-          <span className="text-xs text-gray-600 dark:text-gray-400">Must See</span>
+      <div className="mt-5 flex flex-wrap gap-4">
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-danger-500"></span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">Must See</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-orange-500"></span>
-          <span className="text-xs text-gray-600 dark:text-gray-400">Food</span>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-warning-500"></span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">Food</span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-purple-500"></span>
-          <span className="text-xs text-gray-600 dark:text-gray-400">Shopping</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">Shopping</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-green-500"></span>
-          <span className="text-xs text-gray-600 dark:text-gray-400">Adventure</span>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-success-500"></span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">Adventure</span>
         </div>
       </div>
     </motion.div>
@@ -636,22 +649,25 @@ const InteractiveMap = () => {
 const Sidebar = ({ activeFeature, setActiveFeature }) => {
   const navigate = useNavigate();
   return (
-    <aside className="hidden md:flex flex-col bg-white dark:bg-gray-800 shadow-lg h-full w-64 border-r border-gray-200 dark:border-gray-700 transition-colors duration-300">
+    <aside className="hidden md:flex flex-col bg-white dark:bg-secondary-950 h-full w-72 border-r border-gray-200 dark:border-secondary-900 transition-colors duration-300">
       {/* Logo Section */}
-      <div className="px-6 py-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="px-6 py-5 border-b border-gray-200 dark:border-secondary-900">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-sky-600 dark:bg-sky-500 rounded-lg flex items-center justify-center">
+          <div className="w-11 h-11 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-soft">
             <FaGlobeAsia className="text-white text-xl" />
           </div>
-          <span className="text-xl font-bold text-gray-800 dark:text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
+          <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight font-display">
             Travello
           </span>
         </div>
       </div>
 
       {/* Navigation Items */}
-      <nav className="flex-1 px-4 py-6">
-        <div className="space-y-2">
+      <nav className="flex-1 px-4 py-6 overflow-y-auto">
+        <p className="px-4 mb-3 text-xs font-semibold text-gray-400 dark:text-secondary-400 uppercase tracking-wider">
+          Main Menu
+        </p>
+        <div className="space-y-1">
           {features.map((feature) => {
             const Icon = feature.icon;
             const isActive = activeFeature === feature.name;
@@ -659,10 +675,10 @@ const Sidebar = ({ activeFeature, setActiveFeature }) => {
             return (
               <button
                 key={feature.name}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
                   isActive
-                    ? 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-700'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'bg-primary-50 dark:bg-primary-600/20 text-primary-700 dark:text-white border-l-4 border-primary-500 rounded-l-none'
+                    : 'text-gray-600 dark:text-secondary-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
                 }`}
                 onClick={() => {
                   if (feature.name === 'Browse Hotels') {
@@ -673,10 +689,9 @@ const Sidebar = ({ activeFeature, setActiveFeature }) => {
                     setActiveFeature(feature.name);
                   }
                 }}
-                style={{ fontFamily: 'Inter, sans-serif' }}
               >
-                <Icon className={`text-lg ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`} />
-                {feature.name}
+                <Icon className={`text-lg ${isActive ? 'text-primary-500 dark:text-primary-400' : 'text-gray-400 dark:text-secondary-400'}`} />
+                <span className="text-sm">{feature.name}</span>
               </button>
             );
           })}
@@ -684,16 +699,16 @@ const Sidebar = ({ activeFeature, setActiveFeature }) => {
       </nav>
 
       {/* User Profile Section */}
-      <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
-          <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-            <FaUser className="text-gray-600 dark:text-gray-300 text-sm" />
+      <div className="px-4 py-4 border-t border-gray-200 dark:border-secondary-900 bg-gray-50 dark:bg-secondary-900/50">
+        <div className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer transition-all duration-200">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-accent-400 rounded-full flex items-center justify-center ring-2 ring-white dark:ring-secondary-700 shadow-soft">
+            <FaUser className="text-white text-sm" />
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-800 dark:text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
               Faizan Khan
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <p className="text-xs text-gray-500 dark:text-secondary-400 truncate">
               faizan@example.com
             </p>
           </div>
@@ -706,50 +721,211 @@ const Sidebar = ({ activeFeature, setActiveFeature }) => {
 // Professional Top Navigation Bar
 const TopNav = () => {
   const navigate = useNavigate();
+  const [showThankYou, setShowThankYou] = useState(false);
   
   const handleSignOut = () => {
-    // Clear all authentication tokens
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('admin_access_token');
-    localStorage.removeItem('admin_refresh_token');
-    localStorage.removeItem('admin');
+    // Show thank you modal first
+    setShowThankYou(true);
     
-    // Redirect to login page
-    navigate('/login');
+    // After animation, clear tokens and redirect
+    setTimeout(() => {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('admin_access_token');
+      localStorage.removeItem('admin_refresh_token');
+      localStorage.removeItem('admin');
+      navigate('/login');
+    }, 3000);
   };
 
   return (
-    <header className="w-full bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 py-4 transition-colors duration-300">
-      <div className="flex items-center gap-4">
-        <FaBars className="text-gray-600 dark:text-gray-300 w-5 h-5 md:hidden cursor-pointer" />
-        <div>
-          <h1 className="text-xl font-bold text-gray-800 dark:text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
-            Dashboard
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400" style={{ fontFamily: 'Inter, sans-serif' }}>
-            Welcome back, manage your travel bookings
-          </p>
+    <>
+      {/* Thank You Modal with 3D Animation */}
+      <AnimatePresence>
+        {showThankYou && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ 
+                scale: 0.3, 
+                rotateX: 90, 
+                rotateY: -90,
+                opacity: 0 
+              }}
+              animate={{ 
+                scale: 1, 
+                rotateX: 0, 
+                rotateY: 0,
+                opacity: 1,
+                transition: {
+                  type: "spring",
+                  damping: 15,
+                  stiffness: 100,
+                  duration: 0.8
+                }
+              }}
+              exit={{ 
+                scale: 0.3, 
+                rotateX: -90,
+                rotateY: 90,
+                opacity: 0,
+                transition: { duration: 0.5 }
+              }}
+              style={{ perspective: 1000 }}
+              className="relative bg-gradient-to-br from-primary-500 via-accent-500 to-primary-600 p-1 rounded-3xl shadow-2xl"
+            >
+              <div className="bg-white dark:bg-gray-900 rounded-3xl px-12 py-10 text-center relative overflow-hidden">
+                {/* Animated Background Particles */}
+                <motion.div
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 180, 360]
+                  }}
+                  transition={{ 
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                  className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-accent-400/20 to-primary-400/20 rounded-full blur-xl"
+                />
+                <motion.div
+                  animate={{ 
+                    scale: [1.2, 1, 1.2],
+                    rotate: [360, 180, 0]
+                  }}
+                  transition={{ 
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                  className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-br from-primary-400/20 to-accent-400/20 rounded-full blur-xl"
+                />
+                
+                {/* 3D Rotating Icon */}
+                <motion.div
+                  animate={{ 
+                    rotateY: [0, 360],
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                  className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-primary-500 to-accent-500 rounded-2xl flex items-center justify-center shadow-lg"
+                  style={{ transformStyle: "preserve-3d" }}
+                >
+                  <FaGlobeAsia className="text-white text-3xl" />
+                </motion.div>
+                
+                {/* Thank You Text with Animation */}
+                <motion.h2
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent mb-3 font-display"
+                >
+                  Thank You!
+                </motion.h2>
+                
+                <motion.p
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-gray-600 dark:text-gray-300 text-lg mb-4"
+                >
+                  For using the <span className="font-semibold text-primary-600 dark:text-primary-400">Travello</span> app
+                </motion.p>
+                
+                <motion.p
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.7 }}
+                  className="text-gray-500 dark:text-gray-400 text-sm"
+                >
+                  Safe travels! See you again soon 🌍
+                </motion.p>
+                
+                {/* Loading Dots */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  className="flex justify-center gap-2 mt-6"
+                >
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      animate={{ 
+                        y: [0, -8, 0],
+                        scale: [1, 1.2, 1]
+                      }}
+                      transition={{ 
+                        duration: 0.6,
+                        repeat: Infinity,
+                        delay: i * 0.15
+                      }}
+                      className="w-3 h-3 bg-gradient-to-br from-primary-500 to-accent-500 rounded-full"
+                    />
+                  ))}
+                </motion.div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <header className="w-full bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl shadow-sm border-b border-gray-200/50 dark:border-surface-800/50 flex items-center justify-between px-6 lg:px-8 py-3 transition-all duration-300 sticky top-0 z-30">
+        <div className="flex items-center gap-4">
+          <button className="p-2.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-800 rounded-xl transition-all duration-200 md:hidden">
+            <FaBars className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl items-center justify-center shadow-md">
+              <FaHotel className="text-white text-lg" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white font-display">
+                Dashboard
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
+                Welcome back, manage your travel bookings
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
-      
-      <div className="flex items-center gap-4">
-        <button className="relative p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-          <FaBell className="text-xl" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
         
-        <button 
-          onClick={handleSignOut}
-          className="flex items-center gap-2 px-4 py-2 text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-lg font-medium transition-colors shadow-sm" 
-          style={{ fontFamily: 'Inter, sans-serif' }}
-        >
-          <FaSignOutAlt />
-          Sign Out
-        </button>
-      </div>
-    </header>
+        <div className="flex items-center gap-3">
+          {/* Notification Button */}
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="relative p-2.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-800 rounded-xl transition-all duration-200"
+          >
+            <FaBell className="text-lg" />
+            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white dark:ring-surface-900 animate-pulse"></span>
+          </motion.button>
+          
+          {/* Divider */}
+          <div className="hidden sm:block h-8 w-px bg-gray-200 dark:bg-surface-700"></div>
+          
+          {/* Sign Out Button - Red Style */}
+          <motion.button 
+            onClick={handleSignOut}
+            whileHover={{ scale: 1.02, boxShadow: "0 4px 20px rgba(239, 68, 68, 0.3)" }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+          >
+            <FaSignOutAlt className="text-sm" />
+            <span className="hidden sm:inline">Sign Out</span>
+          </motion.button>
+        </div>
+      </header>
+    </>
   );
 };
 
@@ -777,6 +953,12 @@ const Dashboard = () => {
   const [cancelling, setCancelling] = useState(null);
   
   const suggestions = ['Dubai', 'London', 'Bangkok', 'Paris', 'New York', 'Singapore'];
+
+  // Fetch bookings on mount for stats
+  useEffect(() => {
+    fetchBookings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (activeFeature === 'Hotels') {
@@ -922,32 +1104,32 @@ const Dashboard = () => {
     const statusConfig = {
       PENDING: {
         icon: FaClock,
-        bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
-        textColor: 'text-yellow-700 dark:text-yellow-400',
+        bgColor: 'bg-warning-100 dark:bg-warning-900/30',
+        textColor: 'text-warning-700 dark:text-warning-400',
         label: 'Pending'
       },
       PAID: {
         icon: FaCheckCircle,
-        bgColor: 'bg-green-100 dark:bg-green-900/30',
-        textColor: 'text-green-700 dark:text-green-400',
+        bgColor: 'bg-success-100 dark:bg-success-900/30',
+        textColor: 'text-success-700 dark:text-success-400',
         label: 'Paid'
       },
       CONFIRMED: {
         icon: FaCheckCircle,
-        bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-        textColor: 'text-blue-700 dark:text-blue-400',
+        bgColor: 'bg-primary-100 dark:bg-primary-900/30',
+        textColor: 'text-primary-700 dark:text-primary-400',
         label: 'Confirmed'
       },
       COMPLETED: {
         icon: FaCheckCircle,
-        bgColor: 'bg-green-100 dark:bg-green-900/30',
-        textColor: 'text-green-700 dark:text-green-400',
+        bgColor: 'bg-success-100 dark:bg-success-900/30',
+        textColor: 'text-success-700 dark:text-success-400',
         label: 'Completed'
       },
       CANCELLED: {
         icon: FaClock,
-        bgColor: 'bg-red-100 dark:bg-red-900/30',
-        textColor: 'text-red-700 dark:text-red-400',
+        bgColor: 'bg-danger-100 dark:bg-danger-900/30',
+        textColor: 'text-danger-700 dark:text-danger-400',
         label: 'Cancelled'
       }
     };
@@ -1030,19 +1212,19 @@ const Dashboard = () => {
   }, [hotels, filtersActive, destination, roomType, roomTypeTouched, checkIn, checkOut]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-surface-950 flex flex-col transition-colors duration-300">
       <TopNav />
       
-      <div className="flex flex-1">
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
         
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto">
+        <main className="flex-1 p-6 lg:p-8 pt-8 lg:pt-10 overflow-y-auto">
           {/* Page Header */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-display">
               {activeFeature}
             </h2>
-            <p className="text-gray-600 dark:text-gray-400" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
               {features.find(f => f.name === activeFeature)?.description || 'Manage your travel'}
             </p>
           </div>
@@ -1052,24 +1234,29 @@ const Dashboard = () => {
               {/* Hotel Search Section */}
               <div className="max-w-5xl">
               {/* Hotel Search Card */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8 transition-colors duration-300">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
-                  Search Hotels by City
-                </h3>
+              <div className="bg-white dark:bg-surface-900 rounded-2xl shadow-soft border border-gray-100 dark:border-surface-800 p-6 lg:p-8 transition-colors duration-300">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center">
+                    <FaSearch className="text-primary-600 dark:text-primary-400" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white font-display">
+                    Search Hotels by City
+                  </h3>
+                </div>
                 
                 <form onSubmit={handleSearchHotels} className="space-y-6">
                   {/* Destination */}
                   <div className="relative">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    <label className="form-label mb-2">
                       Destination
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FaHotel className="text-gray-400 dark:text-gray-500" />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <FaHotel className="text-gray-400 dark:text-surface-500" />
                       </div>
                       <input
                         type="text"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                        className="input-with-icon w-full"
                         placeholder="Enter city or hotel name"
                         value={destination}
                         onChange={(e) => {
@@ -1079,25 +1266,24 @@ const Dashboard = () => {
                         }}
                         onFocus={() => setShowSuggestions(true)}
                         onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                        style={{ fontFamily: 'Inter, sans-serif' }}
                       />
                     </div>
                     
                     {/* Suggestions Dropdown */}
                     {showSuggestions && destination && (
-                      <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+                      <div className="absolute z-10 w-full mt-2 bg-white dark:bg-surface-800 border border-gray-200 dark:border-surface-700 rounded-xl shadow-soft-lg overflow-hidden">
                         {suggestions
                           .filter((s) => s.toLowerCase().includes(destination.toLowerCase()))
                           .map((s) => (
                             <div
                               key={s}
-                              className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-gray-700 dark:text-gray-300 transition-colors"
+                              className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-surface-700 cursor-pointer text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-3"
                               onMouseDown={() => {
                                 setDestination(s);
                                 setShowSuggestions(false);
                               }}
-                              style={{ fontFamily: 'Inter, sans-serif' }}
                             >
+                              <FaMapMarkerAlt className="text-gray-400" />
                               {s}
                             </div>
                           ))}
@@ -1106,65 +1292,62 @@ const Dashboard = () => {
                   </div>
 
                   {/* Date Pickers */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                    <div className="form-group">
+                      <label className="form-label">
                         Check-in Date
                       </label>
                       <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <FaCalendarAlt className="text-gray-400 dark:text-gray-500" />
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <FaCalendarAlt className="text-gray-400 dark:text-surface-500" />
                         </div>
                         <input
                           type="date"
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                          className="input-with-icon w-full"
                           value={checkIn}
                           onChange={(e) => {
                             setCheckIn(e.target.value);
                             setFiltersActive(true);
                           }}
-                          style={{ fontFamily: 'Inter, sans-serif' }}
                         />
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    <div className="form-group">
+                      <label className="form-label">
                         Check-out Date
                       </label>
                       <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <FaCalendarAlt className="text-gray-400 dark:text-gray-500" />
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <FaCalendarAlt className="text-gray-400 dark:text-surface-500" />
                         </div>
                         <input
                           type="date"
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                          className="input-with-icon w-full"
                           value={checkOut}
                           onChange={(e) => {
                             setCheckOut(e.target.value);
                             setFiltersActive(true);
                           }}
-                          style={{ fontFamily: 'Inter, sans-serif' }}
                         />
                       </div>
                     </div>
                   </div>
 
                   {/* Passenger Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
+                    <div className="form-group">
+                      <label className="form-label">
                         Adults
                       </label>
                       <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <FaUserFriends className="text-gray-400 dark:text-gray-500" />
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <FaUserFriends className="text-gray-400 dark:text-surface-500" />
                         </div>
                         <select
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                          className="input-with-icon w-full appearance-none cursor-pointer"
                           value={adults}
                           onChange={(e) => setAdults(Number(e.target.value))}
-                          style={{ fontFamily: 'Inter, sans-serif' }}
                         >
                           {[...Array(10).keys()].slice(1).map((n) => (
                             <option key={n} value={n}>
@@ -1175,19 +1358,18 @@ const Dashboard = () => {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    <div className="form-group">
+                      <label className="form-label">
                         Children
                       </label>
                       <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <FaUserFriends className="text-gray-400 dark:text-gray-500" />
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <FaUserFriends className="text-gray-400 dark:text-surface-500" />
                         </div>
                         <select
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                          className="input-with-icon w-full appearance-none cursor-pointer"
                           value={children}
                           onChange={(e) => setChildren(Number(e.target.value))}
-                          style={{ fontFamily: 'Inter, sans-serif' }}
                         >
                           {[...Array(6).keys()].map((n) => (
                             <option key={n} value={n}>
@@ -1198,19 +1380,18 @@ const Dashboard = () => {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    <div className="form-group">
+                      <label className="form-label">
                         Infants
                       </label>
                       <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <FaUserFriends className="text-gray-400 dark:text-gray-500" />
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <FaUserFriends className="text-gray-400 dark:text-surface-500" />
                         </div>
                         <select
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                          className="input-with-icon w-full appearance-none cursor-pointer"
                           value={infants}
                           onChange={(e) => setInfants(Number(e.target.value))}
-                          style={{ fontFamily: 'Inter, sans-serif' }}
                         >
                           {[...Array(4).keys()].map((n) => (
                             <option key={n} value={n}>
@@ -1224,7 +1405,7 @@ const Dashboard = () => {
 
                   {/* Room Type Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    <label className="form-label mb-3">
                       Room Type
                     </label>
                     <div className="flex flex-wrap gap-3">
@@ -1232,17 +1413,16 @@ const Dashboard = () => {
                         <button
                           key={rt.value}
                           type="button"
-                          className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                          className={`chip ${
                             roomType === rt.value
-                              ? 'bg-sky-600 dark:bg-sky-500 text-white border-2 border-sky-600 dark:border-sky-500'
-                              : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-2 border-gray-300 dark:border-gray-600 hover:border-sky-300 dark:hover:border-sky-500'
+                              ? 'chip-selected'
+                              : 'chip-default'
                           }`}
                           onClick={() => {
                             setRoomType(rt.value);
                             setRoomTypeTouched(true);
                             setFiltersActive(true);
                           }}
-                          style={{ fontFamily: 'Inter, sans-serif' }}
                         >
                           {rt.label}
                         </button>
@@ -1251,11 +1431,10 @@ const Dashboard = () => {
                   </div>
 
                   {/* Search Button */}
-                  <div className="pt-4">
+                  <div className="pt-2">
                     <button
                       type="submit"
-                      className="w-full bg-sky-600 dark:bg-sky-500 text-white py-4 rounded-lg font-semibold hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors flex items-center justify-center gap-2 shadow-sm"
-                      style={{ fontFamily: 'Inter, sans-serif' }}
+                      className="btn-accent w-full py-4 text-base"
                     >
                       <FaSearch />
                       Search Hotels
@@ -1266,9 +1445,9 @@ const Dashboard = () => {
 
               {/* Hotels List */}
               {loadingHotels || availabilityChecking ? (
-                <div className="text-center py-12 mt-8 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-sky-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600 dark:text-gray-400 font-semibold mb-2">
+                <div className="text-center py-16 mt-8 bg-white dark:bg-surface-900 rounded-2xl border border-gray-100 dark:border-surface-800 shadow-soft">
+                  <div className="animate-spin rounded-full h-14 w-14 border-4 border-primary-200 border-t-primary-600 mx-auto mb-6"></div>
+                  <p className="text-gray-700 dark:text-gray-300 font-semibold text-lg mb-2">
                     {loadingHotels ? '🔍 Scraping Hotels from Booking.com...' : 'Checking date availability...'}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-500">
@@ -1277,18 +1456,23 @@ const Dashboard = () => {
                 </div>
               ) : filteredHotels.length > 0 ? (
                 <div className="mt-8">
-                  <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
-                    Available Hotels ({filteredHotels.length})
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white font-display">
+                      Available Hotels
+                    </h3>
+                    <span className="badge badge-primary">
+                      {filteredHotels.length} found
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {filteredHotels.map((hotel) => {
                       const roomTypes = hotel.room_types || [];
                       const colors = {
-                        single: { bg: 'bg-blue-50 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400', btn: 'bg-blue-600 hover:bg-blue-700' },
-                        double: { bg: 'bg-green-50 dark:bg-green-900/30', text: 'text-green-600 dark:text-green-400', btn: 'bg-green-600 hover:bg-green-700' },
-                        triple: { bg: 'bg-orange-50 dark:bg-orange-900/30', text: 'text-orange-600 dark:text-orange-400', btn: 'bg-orange-600 hover:bg-orange-700' },
-                        quad: { bg: 'bg-yellow-50 dark:bg-yellow-900/30', text: 'text-yellow-600 dark:text-yellow-400', btn: 'bg-yellow-600 hover:bg-yellow-700' },
-                        family: { bg: 'bg-purple-50 dark:bg-purple-900/30', text: 'text-purple-600 dark:text-purple-400', btn: 'bg-purple-600 hover:bg-purple-700' },
+                        single: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400', btn: 'bg-blue-600 hover:bg-blue-700' },
+                        double: { bg: 'bg-success-50 dark:bg-success-900/20', text: 'text-success-600 dark:text-success-400', btn: 'bg-success-600 hover:bg-success-700' },
+                        triple: { bg: 'bg-warning-50 dark:bg-warning-900/20', text: 'text-warning-600 dark:text-warning-400', btn: 'bg-warning-600 hover:bg-warning-700' },
+                        quad: { bg: 'bg-accent-50 dark:bg-accent-900/20', text: 'text-accent-600 dark:text-accent-400', btn: 'bg-accent-600 hover:bg-accent-700' },
+                        family: { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400', btn: 'bg-purple-600 hover:bg-purple-700' },
                       };
 
                       return (
@@ -1296,15 +1480,15 @@ const Dashboard = () => {
                           key={hotel.id}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow"
+                          className="card-interactive overflow-hidden group"
                         >
                           {/* Hotel Image */}
-                          <div className="h-48 bg-gradient-to-r from-sky-400 to-blue-500 relative overflow-hidden">
+                          <div className="h-48 bg-gradient-to-br from-primary-400 to-accent-500 relative overflow-hidden">
                             {hotel.image ? (
                               <img
                                 src={hotel.image}
                                 alt={hotel.name || 'Hotel'}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                 onError={(e) => {
                                   e.target.onerror = null;
                                   e.target.src = 'https://via.placeholder.com/400x300?text=Hotel+Image';
@@ -1317,33 +1501,34 @@ const Dashboard = () => {
                             )}
                             {/* Live Data Badge */}
                             {hotel.scraped_data && (
-                              <div className="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                                <span>🔴 LIVE</span>
+                              <div className="absolute top-4 left-4 bg-success-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-soft">
+                                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                                LIVE
                               </div>
                             )}
                             {/* Rating Badge */}
-                            <div className="absolute top-4 right-4 bg-white dark:bg-gray-800 px-3 py-1 rounded-full flex items-center gap-1">
-                              <FaStar className="text-yellow-500" />
-                              <span className="font-semibold text-gray-800 dark:text-white">
+                            <div className="absolute top-4 right-4 bg-white/95 dark:bg-surface-800/95 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-soft">
+                              <FaStar className="text-warning-500" />
+                              <span className="font-bold text-gray-800 dark:text-white text-sm">
                                 {Number(hotel.rating ?? 0).toFixed(1)}
                               </span>
                             </div>
                           </div>
 
                           {/* Hotel Details */}
-                          <div className="p-6">
-                            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+                          <div className="p-5">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-1">
                               {hotel.name || 'Hotel'}
                             </h3>
                             
-                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-2">
-                              <FaMapMarkerAlt className="text-sky-600" />
-                              <span className="text-sm">{hotel.city || hotel.address || 'Location'}</span>
+                            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-3">
+                              <FaMapMarkerAlt className="text-primary-500 flex-shrink-0" />
+                              <span className="text-sm truncate">{hotel.city || hotel.address || 'Location'}</span>
                             </div>
                             
                             {/* Review Count & Distance for scraped hotels */}
                             {hotel.scraped_data && (
-                              <div className="flex flex-col gap-1 mb-3">
+                              <div className="flex flex-col gap-1.5 mb-4">
                                 {hotel.review_count ? (
                                   <div className="text-xs text-gray-500 dark:text-gray-400">
                                     📝 {hotel.review_count}
@@ -1359,12 +1544,12 @@ const Dashboard = () => {
                                   </div>
                                 )}
                                 {hotel.check_in_instructions && (
-                                  <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                  <div className="text-xs text-primary-600 dark:text-primary-400 mt-1">
                                     ℹ️ {hotel.check_in_instructions}
                                   </div>
                                 )}
                                 {hotel.policies && (
-                                  <div className="text-xs text-green-600 dark:text-green-400">
+                                  <div className="text-xs text-success-600 dark:text-success-400">
                                     ✓ {hotel.policies}
                                   </div>
                                 )}
@@ -1373,12 +1558,12 @@ const Dashboard = () => {
                             
                             {!hotel.scraped_data && (
                               <>
-                                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-3">
-                                  <FaMapMarkerAlt className="text-sky-600" />
+                                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-3">
+                                  <FaMapMarkerAlt className="text-primary-500" />
                                   <span className="text-sm">{hotel.city}</span>
                                 </div>
 
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">
                                   {hotel.description}
                                 </p>
                               </>
@@ -1387,40 +1572,40 @@ const Dashboard = () => {
                             {/* Amenities */}
                             <div className="flex flex-wrap gap-3 mb-4">
                               {hotel.wifi_available && (
-                                <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                                  <FaWifi className="text-sky-600" />
+                                <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+                                  <FaWifi className="text-primary-500" />
                                   <span>WiFi</span>
                                 </div>
                               )}
                               {hotel.parking_available && (
-                                <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                                  <FaParking className="text-sky-600" />
+                                <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+                                  <FaParking className="text-primary-500" />
                                   <span>Parking</span>
                                 </div>
                               )}
                             </div>
 
                             {/* Availability - REAL TIME from Booking.com */}
-                            <div className={`mb-4 p-3 rounded-lg ${hotel.is_limited ? 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800' : 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800'}`}>
+                            <div className={`mb-4 p-3 rounded-xl ${hotel.is_limited ? 'bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800' : 'bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800'}`}>
                               <div className="flex items-center gap-2">
                                 {hotel.is_limited ? (
                                   <>
-                                    <span className="animate-pulse w-2 h-2 bg-red-500 rounded-full"></span>
-                                    <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                                    <span className="animate-pulse w-2 h-2 bg-danger-500 rounded-full"></span>
+                                    <p className="text-sm font-medium text-danger-600 dark:text-danger-400">
                                       {hotel.rooms_left ? `Only ${hotel.rooms_left} rooms left!` : hotel.availability_status || 'Limited availability'}
                                     </p>
                                   </>
                                 ) : (
                                   <>
-                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                    <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                                    <span className="w-2 h-2 bg-success-500 rounded-full"></span>
+                                    <p className="text-sm font-medium text-success-600 dark:text-success-400">
                                       {hotel.availability_status || 'Available'}
                                     </p>
                                   </>
                                 )}
                               </div>
                               {hotel.has_deal && (
-                                <p className="text-xs text-sky-600 dark:text-sky-400 mt-1">🏷️ {hotel.has_deal}</p>
+                                <p className="text-xs text-primary-600 dark:text-primary-400 mt-1.5">🏷️ {hotel.has_deal}</p>
                               )}
                             </div>
 
@@ -1430,19 +1615,19 @@ const Dashboard = () => {
                                 {roomTypes.slice(0, 4).map((rt) => {
                                   const color = colors[rt.type] || colors.single;
                                   return (
-                                    <div key={rt.id} className={`text-center p-2 ${color.bg} rounded-lg`}>
-                                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1 capitalize">{rt.type} Room</p>
+                                    <div key={rt.id} className={`text-center p-3 ${color.bg} rounded-xl`}>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 capitalize font-medium">{rt.type}</p>
                                       <p className={`text-base font-bold ${color.text}`}>
                                         PKR {Number(rt.price_per_night).toLocaleString('en-PK')}
                                       </p>
-                                      <p className="text-xs text-gray-500 dark:text-gray-400">per day</p>
+                                      <p className="text-xs text-gray-400 dark:text-gray-500">per night</p>
                                     </div>
                                   );
                                 })}
                               </div>
                             ) : (
-                              <div className="mb-4 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
-                                <p className="text-xs text-gray-600 dark:text-gray-400">Room types not configured</p>
+                              <div className="mb-4 p-3 bg-gray-50 dark:bg-surface-800 rounded-xl text-center">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Room types not configured</p>
                               </div>
                             )}
 
@@ -1457,7 +1642,7 @@ const Dashboard = () => {
                                         key={rt.id}
                                         onClick={() => handleBookRoom(hotel, rt.type)}
                                         disabled={rt.available_rooms === 0}
-                                        className={`py-2 ${btnColor} text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs capitalize`}
+                                        className={`py-2.5 ${btnColor} text-white rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm capitalize hover:shadow-soft`}
                                       >
                                         Book {rt.type}
                                       </button>
@@ -1470,7 +1655,7 @@ const Dashboard = () => {
                                 <button
                                   onClick={() => handleBookRoom(hotel, 'single')}
                                   disabled={hotel.available_rooms === 0}
-                                  className="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                                  className="btn-primary w-full"
                                   title={hotel.available_rooms === 0 ? 'No rooms available' : 'Book now'}
                                 >
                                   Book Now
@@ -1484,9 +1669,11 @@ const Dashboard = () => {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-12 mt-8 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <FaHotel className="text-gray-300 dark:text-gray-600 text-6xl mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">
+                <div className="text-center py-16 mt-8 bg-white dark:bg-surface-900 rounded-2xl border border-gray-100 dark:border-surface-800 shadow-soft">
+                  <div className="w-20 h-20 bg-gray-100 dark:bg-surface-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <FaHotel className="text-gray-300 dark:text-surface-600 text-3xl" />
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400 text-lg font-medium mb-2">
                     {destination ? '🔍 No hotels found' : 'Enter search details to find hotels'}
                   </p>
                   {destination && (
@@ -1495,13 +1682,25 @@ const Dashboard = () => {
                     </p>
                   )}
                   {!destination && (
-                    <div className="max-w-md mx-auto mt-6 text-left bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                      <p className="text-sm text-blue-800 dark:text-blue-300 font-semibold mb-2">💡 Quick Tip:</p>
-                      <ul className="text-xs text-blue-700 dark:text-blue-400 space-y-1">
-                        <li>• Enter a destination (e.g., Lahore, Karachi)</li>
-                        <li>• Select check-in and check-out dates</li>
-                        <li>• Choose number of guests and room type</li>
-                        <li>• Click "Search Hotels" for real-time results</li>
+                    <div className="max-w-md mx-auto mt-6 text-left bg-primary-50 dark:bg-primary-900/20 rounded-xl p-5 border border-primary-100 dark:border-primary-800">
+                      <p className="text-sm text-primary-800 dark:text-primary-300 font-semibold mb-3">💡 Quick Tip:</p>
+                      <ul className="text-sm text-primary-700 dark:text-primary-400 space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-primary-500">•</span>
+                          Enter a destination (e.g., Lahore, Karachi)
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-primary-500">•</span>
+                          Select check-in and check-out dates
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-primary-500">•</span>
+                          Choose number of guests and room type
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-primary-500">•</span>
+                          Click "Search Hotels" for real-time results
+                        </li>
                       </ul>
                     </div>
                   )}
@@ -1509,51 +1708,51 @@ const Dashboard = () => {
               )}
 
               {/* Quick Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mt-8">
+                <div className="stat-card">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1" style={{ fontFamily: 'Inter, sans-serif' }}>
+                      <p className="stat-label mb-1">
                         Total Bookings
                       </p>
-                      <p className="text-2xl font-bold text-gray-800 dark:text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        24
+                      <p className="stat-value">
+                        {bookings.length}
                       </p>
                     </div>
-                    <div className="w-12 h-12 bg-sky-50 dark:bg-sky-900/30 rounded-lg flex items-center justify-center">
-                      <FaBook className="text-sky-600 dark:text-sky-400 text-xl" />
+                    <div className="w-14 h-14 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center">
+                      <FaBook className="text-primary-600 dark:text-primary-400 text-xl" />
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors">
+                <div className="stat-card">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1" style={{ fontFamily: 'Inter, sans-serif' }}>
+                      <p className="stat-label mb-1">
                         Upcoming Trips
                       </p>
-                      <p className="text-2xl font-bold text-gray-800 dark:text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        3
+                      <p className="stat-value">
+                        {bookings.filter(b => b.status === 'CONFIRMED' || b.status === 'PAID').length}
                       </p>
                     </div>
-                    <div className="w-12 h-12 bg-green-50 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                      <FaPlane className="text-green-600 dark:text-green-400 text-xl" />
+                    <div className="w-14 h-14 bg-success-100 dark:bg-success-900/30 rounded-2xl flex items-center justify-center">
+                      <FaPlane className="text-success-600 dark:text-success-400 text-xl" />
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors">
+                <div className="stat-card sm:col-span-2 lg:col-span-1">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        Destinations
+                      <p className="stat-label mb-1">
+                        Hotels Available
                       </p>
-                      <p className="text-2xl font-bold text-gray-800 dark:text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        12
+                      <p className="stat-value">
+                        {filteredHotels.length}
                       </p>
                     </div>
-                    <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                      <FaGlobeAsia className="text-purple-600 dark:text-purple-400 text-xl" />
+                    <div className="w-14 h-14 bg-accent-100 dark:bg-accent-900/30 rounded-2xl flex items-center justify-center">
+                      <FaHotel className="text-accent-600 dark:text-accent-400 text-xl" />
                     </div>
                   </div>
                 </div>
@@ -1573,24 +1772,26 @@ const Dashboard = () => {
           {activeFeature === 'My Bookings' && (
             <div className="max-w-6xl">
               {loadingBookings ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-sky-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600 dark:text-gray-400">Loading bookings...</p>
+                <div className="text-center py-16">
+                  <div className="animate-spin rounded-full h-14 w-14 border-4 border-primary-200 border-t-primary-600 mx-auto mb-6"></div>
+                  <p className="text-gray-500 dark:text-gray-400">Loading bookings...</p>
                 </div>
               ) : bookings.length === 0 ? (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8 transition-colors duration-300">
+                <div className="card p-8">
                   <div className="text-center py-12">
-                    <FaBook className="text-gray-300 dark:text-gray-600 text-6xl mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400 text-lg" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    <div className="w-20 h-20 bg-gray-100 dark:bg-surface-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <FaBook className="text-gray-300 dark:text-surface-600 text-3xl" />
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">
                       No bookings yet
                     </p>
-                    <p className="text-gray-400 dark:text-gray-500 text-sm mt-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
                       Your hotel bookings will appear here
                     </p>
                     <div className="mt-6">
                       <button
                         onClick={() => navigate('/hotels')}
-                        className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium transition-colors"
+                        className="btn-primary"
                       >
                         Browse Hotels
                       </button>
@@ -1609,87 +1810,87 @@ const Dashboard = () => {
                         key={booking.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700"
+                        className="card overflow-hidden"
                       >
-                        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <div className="p-6 border-b border-gray-100 dark:border-surface-700 bg-gray-50/50 dark:bg-surface-800/50">
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div className="flex items-center gap-4">
-                              <div className="w-16 h-16 bg-gradient-to-r from-sky-400 to-blue-500 rounded-lg flex items-center justify-center text-white text-2xl font-bold">
+                              <div className="w-16 h-16 bg-gradient-to-br from-primary-400 to-accent-500 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-soft">
                                 {(booking.hotel_details?.name || 'H').charAt(0).toUpperCase()}
                               </div>
                               <div>
-                                <h3 className="text-xl font-bold text-gray-800 dark:text-white">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white font-display">
                                   {booking.hotel_details?.name || 'Hotel'}
                                 </h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
                                   {booking.hotel_details?.city || 'N/A'}
                                 </p>
                               </div>
                             </div>
-                            <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${statusCfg.bgColor} ${statusCfg.textColor} font-medium`}>
-                              <StatusIcon className="text-lg" />
+                            <div className={`badge ${statusCfg.bgColor} ${statusCfg.textColor}`}>
+                              <StatusIcon className="text-sm" />
                               <span>{statusCfg.label}</span>
                             </div>
                           </div>
                         </div>
 
                         <div className="p-6">
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Room Type</p>
-                              <p className="text-lg font-bold text-gray-800 dark:text-white capitalize">{booking.room_type_details?.type || 'N/A'}</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{typeof booking.rooms_booked === 'object' && booking.rooms_booked !== null ? (typeof booking.rooms_booked.rooms_booked === 'number' ? booking.rooms_booked.rooms_booked : 1) : (typeof booking.rooms_booked === 'number' ? booking.rooms_booked : 1)} {(typeof booking.rooms_booked === 'object' && booking.rooms_booked !== null ? (typeof booking.rooms_booked.rooms_booked === 'number' ? booking.rooms_booked.rooms_booked : 1) : (typeof booking.rooms_booked === 'number' ? booking.rooms_booked : 1)) === 1 ? 'room' : 'rooms'}</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                            <div className="p-4 bg-gray-50 dark:bg-surface-800 rounded-xl">
+                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Room Type</p>
+                              <p className="text-lg font-bold text-gray-900 dark:text-white capitalize">{booking.room_type_details?.type || 'N/A'}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{typeof booking.rooms_booked === 'object' && booking.rooms_booked !== null ? (typeof booking.rooms_booked.rooms_booked === 'number' ? booking.rooms_booked.rooms_booked : 1) : (typeof booking.rooms_booked === 'number' ? booking.rooms_booked : 1)} {(typeof booking.rooms_booked === 'object' && booking.rooms_booked !== null ? (typeof booking.rooms_booked.rooms_booked === 'number' ? booking.rooms_booked.rooms_booked : 1) : (typeof booking.rooms_booked === 'number' ? booking.rooms_booked : 1)) === 1 ? 'room' : 'rooms'}</p>
                             </div>
-                            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Check-in</p>
-                              <p className="text-lg font-bold text-gray-800 dark:text-white">{new Date(booking.check_in).toLocaleDateString()}</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{new Date(booking.check_in).toLocaleDateString('en-US', { weekday: 'short' })}</p>
+                            <div className="p-4 bg-gray-50 dark:bg-surface-800 rounded-xl">
+                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Check-in</p>
+                              <p className="text-lg font-bold text-gray-900 dark:text-white">{new Date(booking.check_in).toLocaleDateString()}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{new Date(booking.check_in).toLocaleDateString('en-US', { weekday: 'short' })}</p>
                             </div>
-                            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Check-out</p>
-                              <p className="text-lg font-bold text-gray-800 dark:text-white">{new Date(booking.check_out).toLocaleDateString()}</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{new Date(booking.check_out).toLocaleDateString('en-US', { weekday: 'short' })}</p>
+                            <div className="p-4 bg-gray-50 dark:bg-surface-800 rounded-xl">
+                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Check-out</p>
+                              <p className="text-lg font-bold text-gray-900 dark:text-white">{new Date(booking.check_out).toLocaleDateString()}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{new Date(booking.check_out).toLocaleDateString('en-US', { weekday: 'short' })}</p>
                             </div>
-                            <div className="p-4 bg-sky-50 dark:bg-sky-900/20 rounded-lg border border-sky-200 dark:border-sky-800">
-                              <p className="text-xs font-semibold text-sky-700 dark:text-sky-400 uppercase tracking-wider mb-2">Duration</p>
-                              <p className="text-lg font-bold text-sky-700 dark:text-sky-400">{nights} {nights === 1 ? 'night' : 'nights'}</p>
+                            <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-100 dark:border-primary-800">
+                              <p className="text-xs font-semibold text-primary-700 dark:text-primary-400 uppercase tracking-wider mb-2">Duration</p>
+                              <p className="text-lg font-bold text-primary-700 dark:text-primary-400">{nights} {nights === 1 ? 'night' : 'nights'}</p>
                               {nights > 0 && (
-                                <p className="text-sm text-sky-600 dark:text-sky-300 mt-1">PKR {(booking.total_price / nights).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/night</p>
+                                <p className="text-sm text-primary-600 dark:text-primary-300 mt-1">PKR {(booking.total_price / nights).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/night</p>
                               )}
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Payment Method</p>
-                              <p className="text-lg font-bold text-gray-800 dark:text-white">{getPaymentMethodLabel(booking.payment_method)}</p>
-                              <p className={`text-sm mt-1 ${booking.payment_method === 'ONLINE' ? 'text-blue-600 dark:text-blue-400' : 'text-purple-600 dark:text-purple-400'}`}>{booking.payment_method === 'ONLINE' ? '🔒 Secure' : '💳 At desk'}</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                            <div className="p-4 bg-gray-50 dark:bg-surface-800 rounded-xl">
+                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Payment Method</p>
+                              <p className="text-lg font-bold text-gray-900 dark:text-white">{getPaymentMethodLabel(booking.payment_method)}</p>
+                              <p className={`text-sm mt-1 ${booking.payment_method === 'ONLINE' ? 'text-primary-600 dark:text-primary-400' : 'text-accent-600 dark:text-accent-400'}`}>{booking.payment_method === 'ONLINE' ? '🔒 Secure' : '💳 At desk'}</p>
                             </div>
-                            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Booking Status</p>
-                              <p className="text-lg font-bold text-gray-800 dark:text-white">{booking.status}</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Booked on {new Date(booking.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                            <div className="p-4 bg-gray-50 dark:bg-surface-800 rounded-xl">
+                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Booking Status</p>
+                              <p className="text-lg font-bold text-gray-900 dark:text-white">{booking.status}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Booked on {new Date(booking.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
                             </div>
                             {booking.guest_name && (
-                              <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Guest Name</p>
-                                <p className="text-lg font-bold text-gray-800 dark:text-white truncate">{booking.guest_name}</p>
-                                {booking.guest_email && (<p className="text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">{booking.guest_email}</p>)}
+                              <div className="p-4 bg-gray-50 dark:bg-surface-800 rounded-xl">
+                                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Guest Name</p>
+                                <p className="text-lg font-bold text-gray-900 dark:text-white truncate">{booking.guest_name}</p>
+                                {booking.guest_email && (<p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">{booking.guest_email}</p>)}
                               </div>
                             )}
                           </div>
 
-                          <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-5 border-t border-gray-100 dark:border-surface-700 gap-4">
                             <div>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Amount</p>
-                              <p className="text-2xl font-bold text-sky-600 dark:text-sky-400">PKR {parseFloat(booking.total_price).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Amount</p>
+                              <p className="text-2xl font-bold text-primary-600 dark:text-primary-400 font-display">PKR {parseFloat(booking.total_price).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                             </div>
                             <div className="flex gap-3">
                               {booking.payment_method === 'ONLINE' && booking.status === 'PENDING' && (
-                                <button onClick={() => navigate(`/payment/${booking.id}`, { state: { booking } })} className="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium transition-colors">Complete Payment</button>
+                                <button onClick={() => navigate(`/payment/${booking.id}`, { state: { booking } })} className="btn-primary">Complete Payment</button>
                               )}
                               {booking.status === 'PENDING' && (
-                                <button onClick={() => handleCancelBooking(booking.id)} disabled={cancelling === booking.id} className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50">{cancelling === booking.id ? 'Cancelling...' : 'Cancel'}</button>
+                                <button onClick={() => handleCancelBooking(booking.id)} disabled={cancelling === booking.id} className="btn-danger">{cancelling === booking.id ? 'Cancelling...' : 'Cancel'}</button>
                               )}
                             </div>
                           </div>

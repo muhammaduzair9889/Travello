@@ -9,8 +9,11 @@ const HotelBooking = () => {
   const location = useLocation();
   const { hotel, roomType, checkIn, checkOut } = location.state || {};
 
+  // Get initial rooms from hotel.roomsSelected if available
+  const initialRooms = hotel?.roomsSelected || 1;
+
   const [formData, setFormData] = useState({
-    rooms: 1,
+    rooms: initialRooms,
     checkInDate: checkIn || '',
     checkOutDate: checkOut || '',
   });
@@ -23,7 +26,7 @@ const HotelBooking = () => {
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400 mb-4">No hotel selected</p>
           <button
-            onClick={() => navigate('/hotels')}
+            onClick={() => navigate('/dashboard')}
             className="px-6 py-3 bg-sky-600 text-white rounded-lg"
           >
             Browse Hotels
@@ -34,6 +37,11 @@ const HotelBooking = () => {
   }
 
   const getPricePerDay = () => {
+    // If we have a selectedRoom with pricePerNight, use that
+    if (hotel.selectedRoom?.pricePerNight) {
+      return hotel.selectedRoom.pricePerNight;
+    }
+    
     switch(roomType) {
       case 'single':
         return parseFloat(hotel.single_bed_price_per_day);
@@ -46,7 +54,7 @@ const HotelBooking = () => {
       case 'family':
         return parseFloat(hotel.family_room_price_per_day);
       default:
-        return parseFloat(hotel.single_bed_price_per_day);
+        return parseFloat(hotel.single_bed_price_per_day || hotel.double_bed_price_per_day || 5000);
     }
   };
 
@@ -174,19 +182,19 @@ const HotelBooking = () => {
           {/* Hotel Summary */}
           <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
-              {hotel.hotel_name}
+              {hotel.name || hotel.hotel_name}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-2">
-              Location: {hotel.location}
+              Location: {hotel.location || hotel.address || hotel.city}
             </p>
             <div className="flex items-center gap-2 mb-2">
               <FaBed className="text-sky-600" />
               <span className="text-gray-700 dark:text-gray-300">
-                Room Type : <span className="font-semibold capitalize">{roomType}</span>
+                Room Type : <span className="font-semibold capitalize">{hotel.selectedRoom?.name || roomType}</span>
               </span>
             </div>
             <p className="text-lg font-bold text-sky-600 dark:text-sky-400">
-              PKR {pricePerDay.toLocaleString('en-PK')} per day
+              PKR {pricePerDay.toLocaleString('en-PK')} per night
             </p>
           </div>
 

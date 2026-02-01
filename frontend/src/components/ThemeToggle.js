@@ -7,24 +7,25 @@ const ThemeToggle = () => {
   const { toggleTheme, isDark } = useTheme();
   const location = useLocation();
   
-  // Adjust position for admin pages to avoid overlapping with sign out button
+  // Adjust position for admin pages and dashboard
   const isAdminPage = location.pathname.includes('/admin');
-  const topPosition = isAdminPage ? 'top-20' : 'top-4';
+  const isDashboard = location.pathname.includes('/dashboard');
+  const topPosition = isAdminPage ? 'top-20' : isDashboard ? 'top-[18px]' : 'top-4';
+  // Move to the left on dashboard (after notification bell, before sign out)
+  const rightPosition = isDashboard ? 'right-[180px]' : 'right-4';
 
   return (
     <motion.button
       onClick={toggleTheme}
       initial={{ scale: 0, rotate: -180 }}
       animate={{ scale: 1, rotate: 0 }}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
-      className={`fixed ${topPosition} right-4 z-40 w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 group`}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className={`fixed ${topPosition} ${rightPosition} z-40 w-10 h-10 rounded-xl shadow-md flex items-center justify-center transition-all duration-300 group border-2 border-white/20`}
       style={{
         background: isDark
-          ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-          : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-        backdropFilter: 'blur(10px)',
-        border: '2px solid rgba(255, 255, 255, 0.2)',
+          ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+          : 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
       }}
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
       title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
@@ -35,17 +36,16 @@ const ThemeToggle = () => {
         transition={{ duration: 0.5, ease: 'easeInOut' }}
       >
         {isDark ? (
-          <FaMoon className="text-white text-xl md:text-2xl drop-shadow-lg" />
+          <FaMoon className="text-white text-lg drop-shadow-md" />
         ) : (
-          <FaSun className="text-white text-xl md:text-2xl drop-shadow-lg" />
+          <FaSun className="text-white text-lg drop-shadow-md" />
         )}
       </motion.div>
 
       {/* Tooltip */}
-      <div className="absolute -bottom-12 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-        <div className="bg-gray-800 dark:bg-gray-700 text-white text-xs px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
+      <div className="absolute -bottom-10 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+        <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
           {isDark ? 'Light Mode' : 'Dark Mode'}
-          <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-800 dark:bg-gray-700 transform rotate-45"></div>
         </div>
       </div>
     </motion.button>

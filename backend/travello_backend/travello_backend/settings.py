@@ -195,9 +195,9 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': config('API_RATE_LIMIT', default='100/hour'),
-        'user': config('API_RATE_LIMIT', default='100/hour'),
-        'payment': config('API_PAYMENT_RATE_LIMIT', default='10/hour'),
+        'anon': config('API_RATE_LIMIT', default='1000/hour'),
+        'user': config('API_RATE_LIMIT', default='1000/hour'),
+        'payment': config('API_PAYMENT_RATE_LIMIT', default='100/hour'),
     },
     'EXCEPTION_HANDLER': 'travello_backend.utils.custom_exception_handler',
 }

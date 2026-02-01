@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -107,6 +107,7 @@ const LoadingScreen = ({ searchParams }) => {
       clearInterval(stageInterval);
       clearInterval(dotsInterval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -525,8 +526,6 @@ const FilterSidebar = ({
 
 // Hotel Card Component
 const HotelCard = ({ hotel, searchParams, isFavorite, onToggleFavorite, onBook, isActive }) => {
-  const navigate = useNavigate();
-  
   const getPrice = () => {
     return hotel.double_bed_price_per_day || hotel.single_bed_price_per_day || hotel.price || 0;
   };
@@ -718,7 +717,19 @@ const HotelCard = ({ hotel, searchParams, isFavorite, onToggleFavorite, onBook, 
 const HotelSearchResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const searchParams = location.state || {};
+  const initialSearchParams = location.state || {};
+  
+  // Search params state (mutable)
+  const [searchParams, setSearchParams] = useState(initialSearchParams);
+  
+  // Modify Search Modal
+  const [showModifySearch, setShowModifySearch] = useState(false);
+  const [modifyDestination, setModifyDestination] = useState(initialSearchParams.destination || '');
+  const [modifyCheckIn, setModifyCheckIn] = useState(initialSearchParams.checkIn || '');
+  const [modifyCheckOut, setModifyCheckOut] = useState(initialSearchParams.checkOut || '');
+  const [modifyAdults, setModifyAdults] = useState(initialSearchParams.adults || 2);
+  const [modifyChildren, setModifyChildren] = useState(initialSearchParams.children || 0);
+  const [modifyRoomType, setModifyRoomType] = useState(initialSearchParams.roomType || 'double');
 
   // State
   const [hotels, setHotels] = useState([]);
@@ -757,8 +768,35 @@ const HotelSearchResults = () => {
   // Mobile filter
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // Refs
-  const hotelRefs = useRef({});
+  // Open modify search modal
+  const openModifySearch = () => {
+    setModifyDestination(searchParams.destination || '');
+    setModifyCheckIn(searchParams.checkIn || '');
+    setModifyCheckOut(searchParams.checkOut || '');
+    setModifyAdults(searchParams.adults || 2);
+    setModifyChildren(searchParams.children || 0);
+    setModifyRoomType(searchParams.roomType || 'double');
+    setShowModifySearch(true);
+  };
+
+  // Handle modify search submission
+  const handleModifySearch = () => {
+    const newSearchParams = {
+      destination: modifyDestination,
+      checkIn: modifyCheckIn,
+      checkOut: modifyCheckOut,
+      adults: modifyAdults,
+      children: modifyChildren,
+      roomType: modifyRoomType
+    };
+    setSearchParams(newSearchParams);
+    setShowModifySearch(false);
+    setLoading(true);
+    setCurrentPage(1);
+    
+    // Fetch hotels with new params
+    fetchHotelsWithParams(newSearchParams);
+  };
 
   // Fetch hotels on mount
   useEffect(() => {
@@ -766,9 +804,14 @@ const HotelSearchResults = () => {
     // Load favorites from localStorage
     const savedFavorites = JSON.parse(localStorage.getItem('favoriteHotels') || '[]');
     setFavorites(new Set(savedFavorites));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchHotels = async () => {
+    fetchHotelsWithParams(searchParams);
+  };
+
+  const fetchHotelsWithParams = async (params) => {
     setLoading(true);
     setError('');
 
@@ -777,12 +820,12 @@ const HotelSearchResults = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          city: searchParams.destination || 'Lahore',
-          checkin: searchParams.checkIn,
-          checkout: searchParams.checkOut,
-          adults: parseInt(searchParams.adults) || 2,
+          city: params.destination || 'Lahore',
+          checkin: params.checkIn,
+          checkout: params.checkOut,
+          adults: parseInt(params.adults) || 2,
           rooms: 1,
-          children: parseInt(searchParams.children) || 0,
+          children: parseInt(params.children) || 0,
           use_cache: true
         })
       });
@@ -819,7 +862,7 @@ const HotelSearchResults = () => {
           return {
             id: `scraped-${index}`,
             name: hotel.name || 'Hotel',
-            city: searchParams.destination || 'Lahore',
+            city: params.destination || 'Lahore',
             address: hotel.location || hotel.distance || '',
             location: hotel.location || hotel.distance || '',
             description: hotel.amenities?.join(', ') || 'No amenities listed',
@@ -850,6 +893,7 @@ const HotelSearchResults = () => {
 
         setHotels(transformedHotels);
         setFilteredHotels(transformedHotels);
+        setError(''); // Clear any previous errors on success
 
         // Calculate actual price range
         const prices = transformedHotels.map(h => h.double_bed_price_per_day);
@@ -984,15 +1028,18 @@ const HotelSearchResults = () => {
   };
 
   const handleBookHotel = (hotel) => {
-    navigate('/hotel-booking', {
+    navigate('/hotel-details', {
       state: {
         hotel: hotel,
-        roomType: searchParams.roomType || 'double',
-        checkIn: searchParams.checkIn,
-        checkOut: searchParams.checkOut,
-        adults: searchParams.adults,
-        children: searchParams.children,
-        infants: searchParams.infants
+        searchParams: {
+          destination: searchParams.destination,
+          checkIn: searchParams.checkIn,
+          checkOut: searchParams.checkOut,
+          adults: searchParams.adults || 2,
+          children: searchParams.children || 0,
+          roomType: searchParams.roomType || 'double',
+          infants: searchParams.infants || 0
+        }
       }
     });
   };
@@ -1025,6 +1072,160 @@ const HotelSearchResults = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Modify Search Modal */}
+      <AnimatePresence>
+        {showModifySearch && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onClick={() => setShowModifySearch(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <FaSearch className="text-white text-lg" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Modify Search</h2>
+                    <p className="text-blue-100 text-sm">Update your search criteria</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowModifySearch(false)}
+                  className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors"
+                >
+                  <FaTimes className="text-white text-lg" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 space-y-5">
+                {/* Destination */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    <FaMapMarkerAlt className="inline mr-2 text-blue-500" />
+                    Destination
+                  </label>
+                  <input
+                    type="text"
+                    value={modifyDestination}
+                    onChange={(e) => setModifyDestination(e.target.value)}
+                    placeholder="Enter city or hotel name"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  />
+                </div>
+
+                {/* Dates */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      <FaCalendarAlt className="inline mr-2 text-blue-500" />
+                      Check-in Date
+                    </label>
+                    <input
+                      type="date"
+                      value={modifyCheckIn}
+                      onChange={(e) => setModifyCheckIn(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      <FaCalendarAlt className="inline mr-2 text-blue-500" />
+                      Check-out Date
+                    </label>
+                    <input
+                      type="date"
+                      value={modifyCheckOut}
+                      onChange={(e) => setModifyCheckOut(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Guests */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      <FaUsers className="inline mr-2 text-blue-500" />
+                      Adults
+                    </label>
+                    <select
+                      value={modifyAdults}
+                      onChange={(e) => setModifyAdults(parseInt(e.target.value))}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    >
+                      {[1, 2, 3, 4, 5, 6].map(n => (
+                        <option key={n} value={n}>{n} Adult{n > 1 ? 's' : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Children
+                    </label>
+                    <select
+                      value={modifyChildren}
+                      onChange={(e) => setModifyChildren(parseInt(e.target.value))}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    >
+                      {[0, 1, 2, 3, 4].map(n => (
+                        <option key={n} value={n}>{n} Child{n !== 1 ? 'ren' : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      <FaBed className="inline mr-2 text-blue-500" />
+                      Room Type
+                    </label>
+                    <select
+                      value={modifyRoomType}
+                      onChange={(e) => setModifyRoomType(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    >
+                      <option value="single">Single</option>
+                      <option value="double">Double</option>
+                      <option value="triple">Triple</option>
+                      <option value="quad">Quad</option>
+                      <option value="family">Family</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 dark:bg-gray-700/50 px-6 py-4 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setShowModifySearch(false)}
+                  className="px-6 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleModifySearch}
+                  className="px-8 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                >
+                  <FaSearch />
+                  Search Hotels
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header with Search Summary */}
       <div className="bg-blue-600 dark:bg-blue-800 text-white shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -1085,7 +1286,7 @@ const HotelSearchResults = () => {
 
             {/* Search Button */}
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={openModifySearch}
               className="px-8 py-3 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold rounded-xl transition-colors shadow-lg flex items-center gap-2"
             >
               <FaSearch />

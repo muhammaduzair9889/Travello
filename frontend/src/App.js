@@ -21,6 +21,7 @@ const HotelResults = lazy(() => import('./components/HotelResults'));
 const HotelSearchResults = lazy(() => import('./components/HotelSearchResults'));
 const HotelBooking = lazy(() => import('./components/HotelBooking'));
 const HotelDetailPage = lazy(() => import('./components/HotelDetailPage'));
+const HotelDetailsPage = lazy(() => import('./components/HotelDetailsPage'));
 const Payment = lazy(() => import('./components/Payment'));
 const PaymentPage = lazy(() => import('./components/PaymentPage'));
 const PaymentSuccess = lazy(() => import('./components/PaymentSuccess'));
@@ -85,6 +86,7 @@ function App() {
                   <Route path="/hotels/search-lahore" element={<HotelSearchLahore />} />
                   <Route path="/hotels/results" element={<HotelResults />} />
                   <Route path="/hotels/search-results" element={<HotelSearchResults />} />
+                  <Route path="/hotel-details" element={<HotelDetailsPage />} />
                   <Route path="/hotel-booking" element={<HotelBooking />} />
                   <Route path="/payment" element={<Payment />} />
                   <Route path="/payment/:bookingId" element={<PaymentPage />} />

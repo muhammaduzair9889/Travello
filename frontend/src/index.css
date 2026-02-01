@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;900&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -14,17 +14,29 @@
   :root {
     --color-bg-primary: 255 255 255;
     --color-bg-secondary: 249 250 251;
+    --color-bg-tertiary: 243 244 246;
     --color-text-primary: 17 24 39;
     --color-text-secondary: 107 114 128;
+    --color-text-muted: 156 163 175;
     --color-border: 229 231 235;
+    --color-border-light: 243 244 246;
+    --sidebar-bg: 30 36 51;
+    --sidebar-text: 255 255 255;
+    --sidebar-hover: 51 120 255;
   }
 
   .dark {
-    --color-bg-primary: 17 24 39;
-    --color-bg-secondary: 31 41 55;
-    --color-text-primary: 249 250 251;
-    --color-text-secondary: 209 213 219;
-    --color-border: 55 65 81;
+    --color-bg-primary: 24 24 27;
+    --color-bg-secondary: 39 39 42;
+    --color-bg-tertiary: 63 63 70;
+    --color-text-primary: 250 250 250;
+    --color-text-secondary: 161 161 170;
+    --color-text-muted: 113 113 122;
+    --color-border: 63 63 70;
+    --color-border-light: 39 39 42;
+    --sidebar-bg: 20 24 33;
+    --sidebar-text: 255 255 255;
+    --sidebar-hover: 51 120 255;
   }
   
   /* Optimize font rendering */
@@ -32,6 +44,7 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
   }
 }
 
@@ -49,6 +62,137 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* ============================================ */
+/* PREMIUM UI COMPONENTS */
+/* ============================================ */
+
+@layer components {
+  /* Premium Card Styles */
+  .card {
+    @apply bg-white dark:bg-surface-900 rounded-2xl border border-gray-100 dark:border-surface-700 shadow-soft;
+  }
+  
+  .card-elevated {
+    @apply bg-white dark:bg-surface-900 rounded-2xl border border-gray-100 dark:border-surface-700 shadow-soft-lg hover:shadow-soft-xl transition-shadow duration-300;
+  }
+  
+  .card-interactive {
+    @apply bg-white dark:bg-surface-900 rounded-2xl border border-gray-100 dark:border-surface-700 shadow-soft hover:shadow-soft-lg hover:border-primary-200 dark:hover:border-primary-700 transition-all duration-300 cursor-pointer;
+  }
+
+  /* Premium Input Styles */
+  .input-field {
+    @apply w-full px-4 py-3 bg-gray-50 dark:bg-surface-800 border border-gray-200 dark:border-surface-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-surface-400 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:focus:border-primary-400 transition-all duration-200 outline-none;
+  }
+  
+  .input-with-icon {
+    @apply pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-surface-800 border border-gray-200 dark:border-surface-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-surface-400 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:focus:border-primary-400 transition-all duration-200 outline-none;
+  }
+
+  /* Premium Button Styles */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold rounded-xl shadow-soft hover:shadow-soft-lg transition-all duration-200;
+  }
+  
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 dark:bg-surface-700 hover:bg-gray-200 dark:hover:bg-surface-600 text-gray-700 dark:text-gray-200 font-semibold rounded-xl transition-all duration-200;
+  }
+  
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-600 hover:to-primary-600 text-white font-semibold rounded-xl shadow-soft hover:shadow-glow-accent transition-all duration-200;
+  }
+  
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-danger-500 hover:bg-danger-600 active:bg-danger-700 text-white font-semibold rounded-xl transition-all duration-200;
+  }
+  
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-surface-700 rounded-xl transition-all duration-200;
+  }
+
+  /* Premium Badge Styles */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full;
+  }
+  
+  .badge-primary {
+    @apply bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300;
+  }
+  
+  .badge-success {
+    @apply bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300;
+  }
+  
+  .badge-warning {
+    @apply bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300;
+  }
+  
+  .badge-danger {
+    @apply bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300;
+  }
+
+  /* Sidebar Navigation */
+  .sidebar {
+    @apply flex flex-col bg-secondary-900 dark:bg-secondary-950 h-full w-72 border-r border-secondary-800 dark:border-secondary-900;
+  }
+  
+  .sidebar-nav-item {
+    @apply w-full flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-all duration-200;
+  }
+  
+  .sidebar-nav-item-active {
+    @apply w-full flex items-center gap-3 px-4 py-3 text-white bg-primary-600/20 border-l-4 border-primary-500 rounded-r-xl font-medium;
+  }
+
+  /* Section Headers */
+  .section-header {
+    @apply flex items-center justify-between mb-6;
+  }
+  
+  .section-title {
+    @apply text-xl font-bold text-gray-900 dark:text-white font-display;
+  }
+  
+  .section-subtitle {
+    @apply text-sm text-gray-500 dark:text-gray-400 mt-1;
+  }
+
+  /* Stats Card */
+  .stat-card {
+    @apply bg-white dark:bg-surface-900 rounded-2xl p-6 border border-gray-100 dark:border-surface-700 shadow-soft;
+  }
+  
+  .stat-value {
+    @apply text-3xl font-bold text-gray-900 dark:text-white font-display;
+  }
+  
+  .stat-label {
+    @apply text-sm font-medium text-gray-500 dark:text-gray-400;
+  }
+
+  /* Form Group */
+  .form-group {
+    @apply space-y-2;
+  }
+  
+  .form-label {
+    @apply block text-sm font-semibold text-gray-700 dark:text-gray-300;
+  }
+
+  /* Chip/Tag Selection */
+  .chip {
+    @apply px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 border-2;
+  }
+  
+  .chip-default {
+    @apply bg-gray-50 dark:bg-surface-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-surface-600 hover:border-primary-300 dark:hover:border-primary-600;
+  }
+  
+  .chip-selected {
+    @apply bg-primary-600 text-white border-primary-600 shadow-glow;
+  }
 }
 
 /* ============================================ */
