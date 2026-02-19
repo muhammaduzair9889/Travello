@@ -92,7 +92,7 @@ def scrape_hotels(request):
                 ['node', puppeteer_script, params_json],
                 capture_output=True,
                 text=True,
-                timeout=120,
+                timeout=300,  # 5 min timeout for multi-page scraping
                 cwd=current_dir,
                 encoding='utf-8',  # Fix Windows encoding issue
                 errors='replace'   # Replace undecodable chars instead of crashing
@@ -115,7 +115,7 @@ def scrape_hotels(request):
                 logger.warning(f"No hotels found. stderr: {result.stderr[:500] if result.stderr else 'None'}")
                 
         except subprocess.TimeoutExpired:
-            logger.error("Real-time scraping timed out after 120 seconds")
+            logger.error("Real-time scraping timed out after 300 seconds")
         except FileNotFoundError:
             logger.error("Node.js not found. Install Node.js for real-time scraping")
         except Exception as e:

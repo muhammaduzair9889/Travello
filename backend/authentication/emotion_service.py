@@ -42,7 +42,7 @@ class EmotionAwareRecommendationService:
             self.emotion_classifier = pipeline(
                 "text-classification",
                 model="j-hartmann/emotion-english-distilroberta-base",
-                return_all_scores=False,
+                top_k=1,
                 device=-1  # Use CPU
             )
             _EMOTION_MODEL_AVAILABLE = True
@@ -68,9 +68,13 @@ class EmotionAwareRecommendationService:
         
         if model_available and self.emotion_classifier:
             try:
-                result = self.emotion_classifier(text)[0]
-                emotion = result['label']
-                confidence = result['score']
+                result = self.emotion_classifier(text)
+                # top_k=1 returns [[{label, score}]], so unwrap both layers
+                top = result[0]
+                if isinstance(top, list):
+                    top = top[0]
+                emotion = top['label']
+                confidence = top['score']
                 
                 logger.info(f"Detected emotion: {emotion} (confidence: {confidence:.2f})")
                 return emotion, confidence

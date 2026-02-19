@@ -296,8 +296,8 @@ GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
 # Groq AI Settings (Free & Fast - Llama 3)
 GROQ_API_KEY = config('GROQ_API_KEY', default='')
 
-# RapidAPI Settings for Hotel Search
-RAPIDAPI_KEY = config('RAPIDAPI_KEY', default='')
+# RapidAPI removed - using Puppeteer scraper for real-time hotel data
+# RAPIDAPI_KEY is no longer used
 
 # Amadeus API Settings
 AMADEUS_API_KEY = config('AMADEUS_API_KEY', default='')

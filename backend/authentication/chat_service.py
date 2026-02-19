@@ -1,22 +1,21 @@
 import logging
 import requests
-import json
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-# Lazy import emotion service - will be imported only when needed
+# Lazy import emotion service
 _emotion_service = None
-_EMOTION_SERVICE_AVAILABLE = True  # Assume available, check on first use
+_EMOTION_SERVICE_AVAILABLE = True
 
 
 def _get_emotion_service():
-    """Lazy load emotion service on first use"""
+    """Lazy load emotion service on first use."""
     global _emotion_service, _EMOTION_SERVICE_AVAILABLE
-    
+
     if _emotion_service is not None:
         return _emotion_service
-    
+
     try:
         from .emotion_service import emotion_service
         _emotion_service = emotion_service
@@ -28,468 +27,219 @@ def _get_emotion_service():
         return None
 
 
-def get_ai_response(message):
-    """Get response from AI using emotion detection and smart recommendations."""
-    
-    # Detect emotion for context
+# ---------------------------------------------------------------------------
+# Request classification
+# ---------------------------------------------------------------------------
+
+TEXT_PROCESSING_TYPES = {
+    'grammar': [
+        'correct the grammar', 'fix grammar', 'fix spelling', 'fix punctuation',
+        'grammar and spelling', 'spelling and punctuation', 'correct spelling',
+        'proofread', 'correct the text', 'fix the text', 'grammar check',
+    ],
+    'enhance': [
+        'enhance', 'improve', 'make it better', 'rewrite', 'polish',
+        'make it more descriptive', 'make it more engaging', 'improve writing',
+        'enhance writing', 'better wording',
+    ],
+    'summarize': [
+        'summarize', 'summary', 'shorten', 'make it shorter', 'brief version',
+        'tldr', 'condense', 'key points',
+    ],
+    'expand': [
+        'expand', 'add details', 'elaborate', 'make it longer',
+        'more detail', 'more descriptive', 'add more', 'flesh out',
+        'vivid descriptions', 'sensory details',
+    ],
+}
+
+
+def _classify_request(message: str):
+    """Return ('text_processing', kind) or ('chat', None)."""
+    msg_lower = message.lower()
+
+    for kind, keywords in TEXT_PROCESSING_TYPES.items():
+        if any(kw in msg_lower for kw in keywords):
+            return 'text_processing', kind
+
+    return 'chat', None
+
+
+# ---------------------------------------------------------------------------
+# Prompt builders
+# ---------------------------------------------------------------------------
+
+def _build_text_processing_prompt(message: str, kind: str) -> tuple:
+    """Build Gemini system instruction + contents for text-processing requests."""
+    system_instructions = {
+        'grammar': (
+            "You are a precise proofreader. "
+            "Correct all grammar, spelling, and punctuation errors in the user's text. "
+            "Return ONLY the corrected text — no explanations, no commentary, no quotes around it. "
+            "Preserve the original tone, meaning, and paragraph structure."
+        ),
+        'enhance': (
+            "You are a skilled writing editor. "
+            "Enhance the user's text to be more vivid, engaging, and well-written. "
+            "Keep the original meaning and facts intact. "
+            "Return ONLY the enhanced text — no explanations, no commentary, no quotes around it."
+        ),
+        'summarize': (
+            "You are a concise summarizer. "
+            "Provide a clear, brief summary of the user's text. "
+            "Capture the key points in 2-4 sentences. "
+            "Return ONLY the summary — no labels, no prefixes like 'Summary:', no extra commentary."
+        ),
+        'expand': (
+            "You are a creative travel writer. "
+            "Expand the user's text with richer descriptions, sensory details, and vivid imagery. "
+            "Stay faithful to the original content and facts. "
+            "Return ONLY the expanded text — no explanations, no commentary, no quotes around it."
+        ),
+    }
+
+    system_text = system_instructions.get(kind, system_instructions['grammar'])
+    contents = [{"parts": [{"text": message}]}]
+    return system_text, contents
+
+
+def _build_chat_prompt(message: str, detected_emotion=None, emotion_confidence=0.0) -> tuple:
+    """Build Gemini system instruction + contents for travel-chat requests."""
+
+    emotion_hint = ""
+    if detected_emotion and emotion_confidence > 0.4:
+        emotion_map = {
+            'stress': "The user seems stressed — be calming and suggest relaxing destinations or activities.",
+            'anxiety': "The user seems anxious — be reassuring, suggest peaceful places.",
+            'joy': "The user is in a great mood — match their energy, suggest exciting experiences.",
+            'sadness': "The user seems down — be warm and empathetic, suggest uplifting experiences.",
+            'disappointment': "The user seems disappointed — be understanding, offer helpful alternatives.",
+            'anger': "The user seems frustrated — be patient and understanding, suggest calming getaways.",
+            'fear': "The user seems nervous — be reassuring, provide safety tips and reliable recommendations.",
+            'surprise': "The user is surprised — engage their curiosity with interesting facts and suggestions.",
+            'neutral': "",
+        }
+        emotion_hint = emotion_map.get(detected_emotion, "")
+
+    system_text = f"""You are the Travello travel assistant — friendly, knowledgeable, and concise.
+
+ABOUT TRAVELLO:
+- Travel booking platform with Hotels, Flights, Sightseeing, Bookings, and Journal sections.
+- Covers Lahore, Karachi, Islamabad and international destinations.
+- Users search hotels by dates, guests, and room type. Prices in PKR.
+
+RESPONSE STYLE:
+- Be natural and conversational — like a helpful friend who knows travel well.
+- Keep answers short (2-4 sentences for simple questions, up to a short paragraph for complex ones).
+- Use markdown sparingly: bold for hotel/place names, bullet points only when listing 3+ items.
+- Do NOT overuse emojis — at most one per response, and only if it feels natural.
+- Never start with "Great question!" or similar filler.
+- If you don't know something specific, say so honestly and suggest how the user can find out.
+- For hotel/flight/booking questions, guide users to the relevant section on the platform.
+{f"EMOTIONAL CONTEXT: {emotion_hint}" if emotion_hint else ""}"""
+
+    contents = [{"parts": [{"text": message}]}]
+    return system_text, contents
+
+
+# ---------------------------------------------------------------------------
+# Gemini API call
+# ---------------------------------------------------------------------------
+
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+
+
+def _call_gemini(system_instruction: str, contents: list, temperature: float = 0.7, max_tokens: int = 1024) -> str:
+    """Make a single Gemini API call and return the text response."""
+    gemini_api_key = getattr(settings, 'GEMINI_API_KEY', '')
+    if not gemini_api_key:
+        raise ValueError("GEMINI_API_KEY is not configured. Set it in your .env file.")
+
+    payload = {
+        "system_instruction": {
+            "parts": [{"text": system_instruction}]
+        },
+        "contents": contents,
+        "generationConfig": {
+            "temperature": temperature,
+            "maxOutputTokens": max_tokens,
+        },
+    }
+
+    response = requests.post(
+        f"{GEMINI_API_URL}?key={gemini_api_key}",
+        headers={'Content-Type': 'application/json'},
+        json=payload,
+        timeout=30,
+    )
+
+    logger.info(f"Gemini API response status: {response.status_code}")
+
+    if response.status_code != 200:
+        logger.error(f"Gemini API error: {response.text[:300]}")
+        raise Exception(f"Gemini API returned status {response.status_code}")
+
+    data = response.json()
+
+    if 'candidates' not in data or not data['candidates']:
+        logger.error(f"No candidates in Gemini response: {data}")
+        raise Exception("No response candidates from Gemini API")
+
+    return data['candidates'][0]['content']['parts'][0]['text'].strip()
+
+
+# ---------------------------------------------------------------------------
+# Public entry point
+# ---------------------------------------------------------------------------
+
+def get_ai_response(message: str) -> dict:
+    """Main entry point — detect emotion, classify request, call Gemini."""
+
+    # 1. Detect emotion
     detected_emotion = None
     emotion_confidence = 0.0
-    
+
     emotion_service = _get_emotion_service()
     if emotion_service and _EMOTION_SERVICE_AVAILABLE:
         try:
             detected_emotion, emotion_confidence = emotion_service.detect_emotion(message)
             logger.info(f"Detected emotion: {detected_emotion} (confidence: {emotion_confidence:.2f})")
         except Exception as e:
-            logger.warning(f"Emotion detection failed: {str(e)}")
-    
-    # Use Gemini API for all AI responses
+            logger.warning(f"Emotion detection failed: {e}")
+
+    # 2. Classify request
+    request_type, processing_kind = _classify_request(message)
+    logger.info(f"Request classified: {request_type}" + (f" ({processing_kind})" if processing_kind else ""))
+
+    # 3. Build prompt and call Gemini
     try:
-        logger.info("Using Gemini API for response")
-        return get_gemini_response(message, detected_emotion, emotion_confidence)
-    except Exception as e:
-        logger.warning(f"Gemini API failed: {str(e)}")
-        # Return a helpful message instead of fallback
-        return {
-            'status': 'success',
-            'reply': "I'm having trouble processing your request right now. Please try again in a moment.",
-            'emotion_detected': detected_emotion if emotion_confidence > 0.4 else None,
-            'confidence': emotion_confidence if emotion_confidence > 0.4 else None
-        }
+        if request_type == 'text_processing':
+            system_instruction, contents = _build_text_processing_prompt(message, processing_kind)
+            # Lower temperature for grammar/summarize (precision), higher for enhance/expand (creativity)
+            temp = 0.3 if processing_kind in ('grammar', 'summarize') else 0.8
+            max_tok = 512 if processing_kind == 'summarize' else 2048
+            reply = _call_gemini(system_instruction, contents, temperature=temp, max_tokens=max_tok)
+        else:
+            system_instruction, contents = _build_chat_prompt(message, detected_emotion, emotion_confidence)
+            reply = _call_gemini(system_instruction, contents, temperature=0.7, max_tokens=1024)
 
-
-def get_gemini_response(message, detected_emotion=None, emotion_confidence=0.0):
-    """Get response from Google Gemini with emotion context."""
-    
-    # Using Google's Gemini API - gemini-2.5-flash model (latest)
-    api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
-    
-    # Check if this is a text processing request (grammar, enhance, etc.)
-    text_processing_keywords = ['correct the grammar', 'fix grammar', 'spelling', 'punctuation',
-                                 'enhance', 'improve', 'summarize', 'summary', 'expand', 
-                                 'make it more descriptive', 'travel journal']
-    is_text_processing = any(keyword in message.lower() for keyword in text_processing_keywords)
-    
-    if is_text_processing:
-        # For text processing requests, use a simpler, direct prompt
-        full_prompt = message
-    else:
-        # Build emotion-aware context for travel queries
-        emotion_context = ""
-        if detected_emotion and emotion_confidence > 0.4:
-            emotion_context = f"\n\nIMPORTANT: The user is feeling {detected_emotion} (confidence: {emotion_confidence:.0%}). "
-            
-            if detected_emotion in ['stress', 'anxiety']:
-                emotion_context += "Suggest peaceful, relaxing hotels with spa/wellness facilities. Recommend calm activities and serene locations."
-            elif detected_emotion == 'joy':
-                emotion_context += "The user is excited! Suggest vibrant, energetic hotels in city centers. Recommend exciting activities and lively places."
-            elif detected_emotion in ['sadness', 'disappointment']:
-                emotion_context += "Be empathetic and uplifting. Suggest comforting hotels with cozy atmosphere. Recommend uplifting activities."
-            elif detected_emotion == 'anger':
-                emotion_context += "Be understanding and calm. Suggest peaceful retreats and quiet hotels. Recommend stress-relief activities."
-        
-        system_context = f"""You are a helpful travel assistant for Travello, a travel booking platform in Pakistan.
-
-Key information:
-- Travello offers hotel bookings in Lahore, Karachi, Islamabad and worldwide
-- Users can search hotels by dates, guests, and room type
-- Prices shown in PKR (Pakistani Rupees)
-- Platform has: Hotels, Flights, Sightseeing, Bookings sections
-
-Be friendly, helpful and give personalized recommendations based on user's emotional state.
-Keep responses concise (3-5 sentences) unless detailed information is requested.
-Always suggest specific hotels with approximate prices.{emotion_context}"""
-
-        full_prompt = f"{system_context}\n\nUser: {message}\n\nAssistant:"
-    
-    try:
-        # Get API key from settings
-        gemini_api_key = getattr(settings, 'GEMINI_API_KEY', 'AIzaSyCJA5lIC4HawP7l0iRuG8b0_8bXswrHmVQ')
-        
-        response = requests.post(
-            f"{api_url}?key={gemini_api_key}",
-            headers={'Content-Type': 'application/json'},
-            json={
-                "contents": [{
-                    "parts": [{
-                        "text": full_prompt
-                    }]
-                }],
-                "generationConfig": {
-                    "temperature": 0.7,
-                    "maxOutputTokens": 1000,
-                }
-            },
-            timeout=30
-        )
-        
-        logger.info(f"Gemini API response status: {response.status_code}")
-        
-        if response.status_code != 200:
-            logger.error(f"Gemini API error response: {response.text}")
-            raise Exception(f"Gemini API returned status {response.status_code}: {response.text[:200]}")
-        
-        data = response.json()
-        logger.info(f"Gemini API response data keys: {data.keys()}")
-        
-        # Handle potential API response variations
-        if 'candidates' not in data or not data['candidates']:
-            logger.error(f"No candidates in Gemini response: {data}")
-            raise Exception("No response candidates from Gemini API")
-        
-        reply = data['candidates'][0]['content']['parts'][0]['text'].strip()
-        
         result = {
             'status': 'success',
             'reply': reply,
-            'model': 'gemini-1.5-flash'
+            'model': 'gemini-2.5-flash',
         }
-        
-        # Add emotion data if detected
+
         if detected_emotion and emotion_confidence > 0.4:
             result['emotion_detected'] = detected_emotion
-            result['confidence'] = emotion_confidence
-        
+            result['confidence'] = round(emotion_confidence, 2)
+
         return result
-        
+
     except Exception as e:
-        logger.error(f"Gemini API error: {str(e)}")
-        raise
-
-
-def get_groq_response(message):
-    """Get response from Groq API (Llama 3 - Free & Fast)."""
-    
-    # Check if this is a text processing request (grammar, enhance, etc.)
-    text_processing_keywords = ['correct the grammar', 'fix grammar', 'spelling', 'punctuation',
-                                 'enhance', 'improve', 'summarize', 'summary', 'expand', 
-                                 'make it more descriptive', 'travel journal']
-    is_text_processing = any(keyword in message.lower() for keyword in text_processing_keywords)
-    
-    if is_text_processing:
-        # For text processing, use a direct instruction
-        system_prompt = """You are a helpful writing assistant. Follow the user's instructions exactly.
-Do not add any extra commentary or explanation - just provide the corrected/enhanced text directly."""
-    else:
-        system_prompt = """You are a helpful travel assistant for Travello, a travel booking platform specializing in Pakistan and international destinations.
-
-Your capabilities:
-- Help users find hotels in Lahore, Karachi, Islamabad and other cities
-- Provide travel tips and destination information
-- Assist with booking questions (hotels, flights, sightseeing)
-- Suggest tourist attractions and activities
-- Share travel safety tips and requirements
-
-Important context about Travello:
-- We offer real-time hotel searches in major Pakistani cities
-- Users can search hotels by entering dates, number of guests, and room type
-- The platform has sections for: Hotels, Flights, Sightseeing, Bookings, and Journal
-- Prices are shown in PKR (Pakistani Rupees)
-
-Guidelines:
-- Be friendly, professional, and helpful
-- Keep responses concise (2-4 sentences for simple queries)
-- For complex questions, provide structured information with bullet points
-- If asked about prices, mention they vary by date and suggest using the search feature
-- Always be encouraging about travel in Pakistan
-- Use emojis sparingly for friendliness (1-2 per response max)
-
-NEVER say you can't help or that you're just an AI. Always provide helpful information or guidance."""
-
-    try:
-        response = requests.post(
-            'https://api.groq.com/openai/v1/chat/completions',
-            headers={
-                'Authorization': f'Bearer {settings.GROQ_API_KEY}',
-                'Content-Type': 'application/json'
-            },
-            json={
-                'model': 'llama-3.1-70b-versatile',  # Fast & powerful
-                'messages': [
-                    {'role': 'system', 'content': system_prompt},
-                    {'role': 'user', 'content': message}
-                ],
-                'temperature': 0.7,
-                'max_tokens': 1000,
-                'top_p': 1,
-                'stream': False
-            },
-            timeout=30
-        )
-        
-        logger.info(f"Groq API response status: {response.status_code}")
-        
-        if response.status_code != 200:
-            logger.error(f"Groq API error response: {response.text}")
-            raise Exception(f"Groq API returned status {response.status_code}")
-        
-        data = response.json()
-        
+        logger.error(f"Gemini API failed: {e}")
         return {
             'status': 'success',
-            'reply': data['choices'][0]['message']['content'].strip(),
-            'model': 'llama-3.1-70b'
+            'reply': "I'm having trouble connecting right now. Please try again in a moment.",
+            'emotion_detected': detected_emotion if emotion_confidence > 0.4 else None,
+            'confidence': round(emotion_confidence, 2) if emotion_confidence > 0.4 else None,
         }
-        
-    except Exception as e:
-        logger.error(f"Groq API error: {str(e)}")
-        raise
-
-
-def get_openai_response(message):
-    """Get response from OpenAI GPT."""
-    
-    system_prompt = """You are a helpful travel assistant for Travello, a travel booking platform specializing in Pakistan and international destinations.
-
-Your capabilities:
-- Help users find hotels in Lahore, Karachi, Islamabad and other cities
-- Provide travel tips and destination information
-- Assist with booking questions
-- Suggest tourist attractions and activities
-
-Be friendly, concise, and helpful. Keep responses under 100 words for simple queries."""
-    
-    try:
-        from openai import OpenAI
-        client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": message}
-            ],
-            max_tokens=500,
-            temperature=0.7
-        )
-        
-        return {
-            'status': 'success',
-            'reply': response.choices[0].message.content.strip(),
-            'model': 'gpt-3.5-turbo'
-        }
-        
-    except ImportError:
-        import openai
-        openai.api_key = settings.OPENAI_API_KEY
-        
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": message}
-            ],
-            max_tokens=500,
-            temperature=0.7
-        )
-        
-        return {
-            'status': 'success',
-            'reply': response.choices[0].message.content.strip(),
-            'model': 'gpt-3.5-turbo'
-        }
-
-
-def get_fallback_response(message):
-    """Provide intelligent fallback responses when AI is not available."""
-    message_lower = message.lower()
-    
-    # Hotel related queries
-    if any(word in message_lower for word in ['hotel', 'accommodation', 'stay', 'room']):
-        return """I can help you find hotels! 🏨
-        
-To search for hotels:
-1. Go to the Hotels section in the dashboard
-2. Enter your destination
-3. Select check-in and check-out dates
-4. Choose number of guests and room type
-5. Click 'Search Hotels' to see available options
-
-Popular destinations: Dubai, London, Paris, New York, Bangkok, Singapore"""
-    
-    # Flight related queries
-    elif any(word in message_lower for word in ['flight', 'fly', 'plane', 'airline']):
-        return """I can assist with flight bookings! ✈️
-        
-To search for flights:
-1. Navigate to the Flights section
-2. Enter departure and destination cities
-3. Select travel dates
-4. Choose number of passengers
-5. Search for available flights
-
-Tip: Book in advance for better prices!"""
-    
-    # Sightseeing/activities
-    elif any(word in message_lower for word in ['sightseeing', 'tour', 'activity', 'attraction', 'visit', 'see']):
-        return """Discover amazing places! 🗺️
-        
-Check out our Sightseeing section for:
-- Popular tourist attractions
-- Local tours and activities
-- Cultural experiences
-- Adventure activities
-- Food tours
-
-Each destination has unique experiences waiting for you!"""
-    
-    # Booking management
-    elif any(word in message_lower for word in ['booking', 'reservation', 'manage', 'cancel', 'modify']):
-        return """Manage your bookings easily! 📋
-        
-In the Bookings section you can:
-- View all your reservations
-- Check booking details
-- Modify or cancel bookings
-- Download booking confirmations
-- Contact support for assistance
-
-Your travel plans, all in one place!"""
-    
-    # Greeting
-    elif any(word in message_lower for word in ['hello', 'hi', 'hey', 'greetings']):
-        return """Hello! 👋 Welcome to Travello!
-
-I'm here to help you with:
-✈️ Flight bookings
-🏨 Hotel reservations
-🗺️ Sightseeing tours
-📋 Managing your bookings
-
-What would you like to explore today?"""
-    
-    # Help/general
-    elif any(word in message_lower for word in ['help', 'assist', 'support', 'how']):
-        return """I'm here to help! 🤝
-
-Travello offers:
-🏨 Hotels - Find and book accommodations worldwide
-✈️ Flights - Search and book flights easily
-🗺️ Sightseeing - Discover tours and activities
-📋 Bookings - Manage all your reservations
-
-Use the dashboard to explore these features. What can I help you with?"""
-    
-    # Default response
-    else:
-        return """Thank you for your message! 😊
-
-I'm Travello Assistant, here to help with your travel needs:
-- Hotel bookings
-- Flight reservations
-- Sightseeing tours
-- Travel planning
-
-Please use the dashboard features to search and book, or ask me specific questions about hotels, flights, or activities!
-
-What would you like to know?"""
-
-
-def get_emotion_based_fallback(message, emotion, confidence):
-    """Generate emotion-aware responses without external APIs."""
-    
-    message_lower = message.lower()
-    
-    # High confidence emotion detected
-    if emotion and confidence > 0.6:
-        
-        if emotion in ['anger', 'angry']:
-            return """I understand you're feeling frustrated. Let me help you find a peaceful getaway to help you relax. 🌿
-
-For calming experiences in Lahore, I recommend:
-
-🏨 **Peaceful Hotels:**
-- Pearl Continental (PKR 35,000/night) - Spa & wellness center
-- Avari Hotel (PKR 28,000/night) - Quiet, elegant atmosphere
-- Royal Palm Golf Club (PKR 45,000/night) - Serene golf resort
-
-🌳 **Relaxing Activities:**
-- Visit Shalimar Gardens for peaceful walks
-- Enjoy spa treatments at luxury hotels
-- Evening at Lahore Canal for fresh air
-
-Would you like me to search for available dates?"""
-        
-        elif emotion in ['joy', 'happy', 'excited']:
-            return """That's wonderful! Your positive energy is contagious! 🎉 Let me suggest some exciting places for your cheerful mood!
-
-🏨 **Vibrant Hotels in Lahore:**
-- Marriott Hotel (PKR 38,000/night) - Luxury in the city center
-- Faletti's Hotel (PKR 30,000/night) - Historic & lively
-- Luxus Grand Hotel (PKR 25,000/night) - Modern & social atmosphere
-
-🎊 **Exciting Activities:**
-- Explore Food Street for amazing local cuisine
-- Visit Badshahi Mosque - breathtaking architecture
-- Shop at Packages Mall or Liberty Market
-- Enjoy the Sound & Light Show at Lahore Fort
-
-Ready to book your adventure? Use the search feature to find the perfect hotel!"""
-        
-        elif emotion in ['sadness', 'sad', 'down']:
-            return """I'm sorry you're feeling down. Sometimes a change of scenery can help lift our spirits. 💙
-
-🏨 **Comforting Hotels:**
-- Pearl Continental (PKR 35,000/night) - Warm, welcoming service
-- Avari Hotel (PKR 28,000/night) - Cozy atmosphere
-- Nishat Hotel (PKR 22,000/night) - Comfortable & affordable
-
-🌟 **Uplifting Activities:**
-- Visit Lahore Museum for cultural inspiration
-- Enjoy traditional tea at a local café
-- Peaceful walk in Lawrence Gardens
-- Experience the beauty of Badshahi Mosque
-
-Take your time, and remember that travel can be healing. How can I help you plan something special?"""
-        
-        elif emotion in ['stress', 'stressed', 'anxious']:
-            return """I can sense you need some relaxation. Let me help you find the perfect stress-relief destination. 🧘
-
-🏨 **Relaxing Hotels with Wellness:**
-- Pearl Continental (PKR 35,000/night) - Full spa & massage services
-- Avari Hotel (PKR 28,000/night) - Quiet rooms, excellent service
-- Royal Palm Golf Club (PKR 45,000/night) - Spa, golf, peaceful environment
-
-🌿 **Stress-Relief Activities:**
-- Spa treatments and massages
-- Yoga sessions (available at premium hotels)
-- Peaceful walks in Shalimar Gardens
-- Quiet evening by Lahore Canal
-
-You deserve a break. Shall I search for peaceful accommodations for you?"""
-    
-    # Handle specific hotel/travel queries
-    if any(word in message_lower for word in ['hotel', 'stay', 'accommodation', 'room']):
-        if 'lahore' in message_lower:
-            return """Here are popular hotels in Lahore:
-
-🏨 **Luxury Options:**
-- Pearl Continental - PKR 35,000/night
-- Marriott Hotel - PKR 38,000/night
-- Avari Hotel - PKR 28,000/night
-
-🏨 **Mid-Range Options:**
-- Faletti's Hotel - PKR 30,000/night
-- Luxus Grand Hotel - PKR 25,000/night
-- Nishat Hotel - PKR 22,000/night
-
-All include WiFi, parking, and excellent service. Use the Hotels section to search by your dates and preferences!
-
-Need help with booking?"""
-        else:
-            return """I can help you find hotels! 🏨
-
-Travello offers accommodations in:
-- Lahore, Karachi, Islamabad (Pakistan)
-- International destinations worldwide
-
-Simply use the Hotels search feature:
-1. Enter your destination
-2. Select check-in/check-out dates
-3. Choose number of guests
-4. Browse and book!
-
-Which city are you interested in?"""
-    
-    # Default fallback
-    return get_fallback_response(message)

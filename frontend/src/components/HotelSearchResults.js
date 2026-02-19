@@ -859,12 +859,25 @@ const HotelSearchResults = () => {
           else if (nameLower.includes('2 star') || nameLower.includes('budget')) stars = 2;
           else if (nameLower.includes('hostel') || nameLower.includes('guest house')) stars = 1;
 
+          // Parse review count to a number to avoid "836 reviews reviews" duplication
+          let reviewNum = null;
+          if (hotel.review_count) {
+            const revMatch = hotel.review_count.toString().replace(/,/g, '').match(/\d+/);
+            if (revMatch) reviewNum = parseInt(revMatch[0]);
+          }
+
+          // Separate location from distance to avoid showing same text twice
+          const hotelAddress = hotel.location || hotel.distance || '';
+          const distanceText = hotel.distance && hotel.location && hotel.distance !== hotel.location
+            ? hotel.distance
+            : '';
+
           return {
             id: `scraped-${index}`,
             name: hotel.name || 'Hotel',
             city: params.destination || 'Lahore',
-            address: hotel.location || hotel.distance || '',
-            location: hotel.location || hotel.distance || '',
+            address: hotelAddress,
+            location: hotelAddress,
             description: hotel.amenities?.join(', ') || 'No amenities listed',
             rating: ratingValue,
             stars: stars,
@@ -875,8 +888,8 @@ const HotelSearchResults = () => {
             has_deal: hotel.has_deal,
             available_rooms: hotel.rooms_left || 10,
             image: hotel.image_url || 'https://via.placeholder.com/400x300?text=Hotel',
-            review_count: hotel.review_count || null,
-            distance_from_center: hotel.distance || '',
+            review_count: reviewNum,
+            distance_from_center: distanceText,
             wifi_available: hotel.amenities?.some(a => a.toLowerCase().includes('wifi')) || false,
             parking_available: hotel.amenities?.some(a => a.toLowerCase().includes('parking')) || false,
             amenities: hotel.amenities || [],

@@ -3,7 +3,6 @@ from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.exceptions import APIException
 from django.db import transaction
 from django.db.models import Q
 from .models import Hotel, Booking, RoomType
@@ -14,7 +13,6 @@ from .serializers import (
     RoomTypeDetailSerializer, BookingUpdateSerializer, BookingListSerializer
 )
 from .api_serializers import HotelSearchSerializer
-from .services import hotel_api_service
 from .permissions import IsStaffUser, IsBookingOwnerOrStaff, CanManageHotels
 from travello_backend.utils import get_safe_error_response
 import logging
@@ -381,117 +379,123 @@ class RealTimeHotelSearchView(APIView):
     Real-time hotel search API for Lahore, Pakistan
     POST /api/hotels/search-live/
     
-    Integrates with Booking.com RapidAPI to fetch live hotel data
+    Forwards requests to the Puppeteer scraper endpoint for real-time Booking.com data.
+    RapidAPI has been removed — all real-time data comes from the scraper.
     """
-    authentication_classes = []  # Disable authentication
-    permission_classes = [AllowAny]  # Allow unauthenticated access for hotel search
+    authentication_classes = []
+    permission_classes = [AllowAny]
     
     def post(self, request):
         """
-        Search for hotels in Lahore with real-time data
-        
-        Request Body:
-        {
-            "check_in": "2025-12-15",
-            "check_out": "2025-12-18",
-            "adults": 2,
-            "children": 1,
-            "infants": 0,
-            "room_type": "double"
-        }
-        
-        Response:
-        {
-            "success": true,
-            "count": 15,
-            "destination": "Lahore, Pakistan",
-            "hotels": [...]
-        }
+        Proxy to the Puppeteer scraper for real-time hotel data.
+        Accepts the same body as before for backward compatibility.
         """
+        import subprocess, os, json
+        from django.core.cache import cache
         
-        # Validate input
-        serializer = HotelSearchSerializer(data=request.data)
+        # Extract search params (support both old and new field names)
+        check_in = request.data.get('check_in') or request.data.get('checkin')
+        check_out = request.data.get('check_out') or request.data.get('checkout')
+        adults = request.data.get('adults', 2)
+        children = request.data.get('children', 0)
         
-        if not serializer.is_valid():
-            logger.warning(f"Invalid search parameters: {serializer.errors}")
+        if not check_in or not check_out:
             return Response(
-                {
-                    'success': False,
-                    'error': 'Invalid search parameters',
-                    'details': serializer.errors
-                },
+                {'success': False, 'error': 'check_in and check_out are required', 'hotels': []},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Extract validated data
-        validated_data = serializer.validated_data
-        check_in = validated_data['check_in'].strftime('%Y-%m-%d')
-        check_out = validated_data['check_out'].strftime('%Y-%m-%d')
-        adults = validated_data['adults']
-        children = validated_data.get('children', 0)
-        room_type = validated_data.get('room_type', 'double')
+        # Format dates if they are date objects
+        if hasattr(check_in, 'strftime'):
+            check_in = check_in.strftime('%Y-%m-%d')
+        if hasattr(check_out, 'strftime'):
+            check_out = check_out.strftime('%Y-%m-%d')
         
-        logger.info(f"Hotel search request: {check_in} to {check_out}, {adults} adults, {children} children, {room_type} room")
+        logger.info(f"Hotel search-live request: {check_in} to {check_out}, {adults} adults")
         
+        # Check cache
+        cache_key = f"realtime_Lahore_{check_in}_{check_out}_{adults}"
+        cached = cache.get(cache_key)
+        if cached:
+            logger.info(f"Returning cached results ({len(cached)} hotels)")
+            return Response({
+                'success': True,
+                'count': len(cached),
+                'destination': 'Lahore, Pakistan',
+                'hotels': cached,
+                'cached': True,
+                'is_real_time': True,
+                'data_source': 'booking.com'
+            })
+        
+        # Run the Puppeteer scraper
         try:
-            # Call hotel API service
-            hotels = hotel_api_service.search_lahore_hotels(
-                check_in=check_in,
-                check_out=check_out,
-                adults=adults,
-                children=children,
-                room_type=room_type
+            scraper_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scraper')
+            scraper_script = os.path.join(scraper_dir, 'puppeteer_scraper.js')
+            
+            search_params = {
+                'city': 'Lahore',
+                'dest_id': '-2767043',
+                'dest_type': 'city',
+                'checkin': check_in,
+                'checkout': check_out,
+                'adults': adults,
+                'rooms': 1,
+                'children': children
+            }
+            
+            result = subprocess.run(
+                ['node', scraper_script, json.dumps(search_params)],
+                capture_output=True,
+                text=True,
+                timeout=300,
+                cwd=scraper_dir,
+                encoding='utf-8',
+                errors='replace'
             )
             
-            logger.info(f"Successfully fetched {len(hotels)} hotels from API")
-            logger.info(f"Hotel IDs: {[h.get('id', 'N/A') for h in hotels[:5]]}")
+            hotels = []
+            for line in reversed(result.stdout.strip().split('\n')):
+                try:
+                    parsed = json.loads(line)
+                    if isinstance(parsed, list):
+                        hotels = parsed
+                        break
+                except json.JSONDecodeError:
+                    continue
             
-            # Always return hotels array, even if empty
-            hotels_list = hotels if hotels else []
-            
-            logger.info(f"Returning response with {len(hotels_list)} hotels")
-            
-            # Return success even if no hotels found (valid scenario)
-            return Response(
-                {
+            if hotels:
+                cache.set(cache_key, hotels, 1800)
+                logger.info(f"Scraper returned {len(hotels)} hotels")
+                return Response({
                     'success': True,
-                    'count': len(hotels_list),
+                    'count': len(hotels),
                     'destination': 'Lahore, Pakistan',
-                    'search_params': {
-                        'check_in': check_in,
-                        'check_out': check_out,
-                        'adults': adults,
-                        'children': children,
-                        'room_type': room_type
-                    },
-                    'hotels': hotels_list
-                },
-                status=status.HTTP_200_OK
-            )
-        
-        except APIException as e:
-            # Handle API-specific errors
-            logger.error(f"Hotel API error: {str(e)}")
-            return Response(
-                {
+                    'hotels': hotels,
+                    'cached': False,
+                    'is_real_time': True,
+                    'data_source': 'booking.com'
+                })
+            else:
+                logger.warning(f"Scraper returned no hotels. stderr: {result.stderr[:500] if result.stderr else 'None'}")
+                return Response({
                     'success': False,
-                    'error': 'Hotel search service error',
-                    'message': str(e),
-                    'hotels': []
-                },
-                status=status.HTTP_503_SERVICE_UNAVAILABLE
+                    'count': 0,
+                    'destination': 'Lahore, Pakistan',
+                    'hotels': [],
+                    'message': 'Unable to fetch real-time data. Please try again.'
+                })
+                
+        except subprocess.TimeoutExpired:
+            logger.error("Scraper timed out after 300s")
+            return Response(
+                {'success': False, 'error': 'Search timed out', 'hotels': []},
+                status=status.HTTP_504_GATEWAY_TIMEOUT
             )
-        
         except Exception as e:
-            # Handle unexpected errors
             logger.error(f"Hotel search failed: {str(e)}", exc_info=True)
             return Response(
-                {
-                    'success': False,
-                    'error': 'Failed to fetch hotel data',
-                    'message': f'An error occurred: {str(e)}',
-                    'hotels': []
-                },
+                {'success': False, 'error': f'Search failed: {str(e)}', 'hotels': []},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

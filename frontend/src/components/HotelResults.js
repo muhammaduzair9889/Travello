@@ -481,8 +481,13 @@ const HotelResults = () => {
                             </h3>
                             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
                               <FaMapMarkerAlt />
-                              <span>{hotel.address}</span>
+                              <span>{hotel.address || hotel.location}</span>
                             </div>
+                            {hotel.availability && (
+                              <span className={`text-xs font-medium px-2 py-0.5 rounded ${hotel.is_limited ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
+                                {hotel.availability}
+                              </span>
+                            )}
                           </div>
                           
                           <button
@@ -503,7 +508,7 @@ const HotelResults = () => {
                               <p className="font-semibold text-gray-800 dark:text-white">
                                 {hotel.rating >= 9 ? 'Exceptional' : hotel.rating >= 8 ? 'Excellent' : hotel.rating >= 7 ? 'Very Good' : 'Good'}
                               </p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">{hotel.reviewCount} reviews</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{hotel.reviewCount ? `${hotel.reviewCount.toLocaleString()} reviews` : ''}</p>
                             </div>
                           </div>
                         )}
@@ -538,7 +543,14 @@ const HotelResults = () => {
 
                         <div className="mt-auto flex items-end justify-between">
                           <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">3 nights, 2 adults</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {(() => {
+                                const d1 = new Date(searchParams.checkIn);
+                                const d2 = new Date(searchParams.checkOut);
+                                const nights = Math.max(1, Math.ceil((d2 - d1) / (1000*60*60*24)));
+                                return `${nights} night${nights > 1 ? 's' : ''}, ${searchParams.adults} adult${searchParams.adults > 1 ? 's' : ''}`;
+                              })()}
+                            </p>
                             <p className="text-3xl font-bold text-blue-600">
                               {formatPrice(hotel.double_bed_price_per_day || hotel.price)}
                             </p>
