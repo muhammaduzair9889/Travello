@@ -74,10 +74,17 @@ class CreatePaymentSessionView(APIView):
         """Create Stripe payment session"""
         # Validate Stripe keys are configured
         if not STRIPE_SECRET_KEY or not STRIPE_WEBHOOK_SECRET:
-            logger.error('Stripe configuration missing')
-            return get_safe_error_response(
-                'Payment service temporarily unavailable',
-                status.HTTP_503_SERVICE_UNAVAILABLE
+            logger.error(f'Stripe configuration missing. Secret: {bool(STRIPE_SECRET_KEY)}, Webhook: {bool(STRIPE_WEBHOOK_SECRET)}')
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Payment service is not properly configured. Please contact administrator.',
+                    'details': {
+                        'stripe_configured': bool(STRIPE_SECRET_KEY),
+                        'webhook_configured': bool(STRIPE_WEBHOOK_SECRET)
+                    }
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
         
         serializer = CreatePaymentSessionSerializer(data=request.data)
@@ -205,15 +212,33 @@ class CreatePaymentSessionView(APIView):
         
         except stripe.error.StripeError as e:
             logger.error(f"Stripe error creating session: {str(e)}")
-            return get_safe_error_response(
-                'Payment processing error',
-                status.HTTP_500_INTERNAL_SERVER_ERROR
+            error_message = str(e)
+            
+            # Provide specific error guidance based on error type
+            if 'No such plan' in error_message or 'Invalid' in error_message:
+                user_message = f'Payment configuration error: {error_message}. Please contact support.'
+            elif 'rate limit' in error_message.lower():
+                user_message = 'Too many payment requests. Please wait a moment and try again.'
+            elif 'api_key' in error_message.lower() or 'authentication' in error_message.lower():
+                user_message = 'Payment service authentication failed. Please try again later.'
+            else:
+                user_message = f'Payment error: {error_message}'
+            
+            return Response(
+                {
+                    'success': False,
+                    'error': user_message
+                },
+                status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
-            logger.error(f"Unexpected error creating payment session: {str(e)}")
-            return get_safe_error_response(
-                'Unexpected error processing payment',
-                status.HTTP_500_INTERNAL_SERVER_ERROR
+            logger.error(f"Unexpected error creating payment session: {str(e)}", exc_info=True)
+            return Response(
+                {
+                    'success': False,
+                    'error': f'Unexpected payment error: {str(e)}'
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
 

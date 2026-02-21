@@ -86,14 +86,35 @@ const PaymentPage = () => {
       const sessionUrl = response.data?.session_url;
 
       if (!sessionUrl) {
-        throw new Error('No session URL received from server');
+        console.error('No session URL in response:', response.data);
+        throw new Error('Payment session could not be created. Please try again.');
       }
 
       // Redirect to Stripe Checkout
       window.location.href = sessionUrl;
     } catch (err) {
       console.error('Error creating payment session:', err);
-      const errorMsg = err.response?.data?.error || err.message || 'Failed to create payment session';
+      
+      // Build detailed error message
+      let errorMsg = 'Payment processing error';
+      
+      if (err.response?.data?.error) {
+        errorMsg = err.response.data.error;
+      } else if (err.response?.data?.detail) {
+        errorMsg = err.response.data.detail;
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      
+      // Log full error details for debugging
+      console.error('Full error details:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+      
       setError(errorMsg);
       setCreating(false);
     }

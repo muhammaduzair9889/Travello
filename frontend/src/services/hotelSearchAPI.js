@@ -8,7 +8,8 @@
 import axios from 'axios';
 
 // Backend API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_ROOT = (process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000')
+  .replace(/\/api\/?$/, '');
 
 /**
  * Search hotels in Lahore, Pakistan with REAL-TIME data from Booking.com scraper
@@ -35,7 +36,7 @@ export const searchLahoreHotels = async (params = {}) => {
   try {
     // Call the Puppeteer scraper endpoint for real-time Booking.com data
     const response = await axios.post(
-      `${API_BASE_URL}/api/scraper/scrape-hotels/`,
+      `${API_ROOT}/api/scraper/scrape-hotels/`,
       {
         city: 'Lahore',
         checkin: checkIn,
