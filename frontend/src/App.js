@@ -12,6 +12,11 @@ import Landing from './components/Landing';
 // Lazy loading for route components
 const Login = lazy(() => import('./components/Login'));
 const Signup = lazy(() => import('./components/Signup'));
+const VerifySignupOtp = lazy(() => import('./components/VerifySignupOtp'));
+const VerifyLoginOtp = lazy(() => import('./components/VerifyLoginOtp'));
+const ForgotPassword = lazy(() => import('./components/ForgotPassword'));
+const VerifyResetOtp = lazy(() => import('./components/VerifyResetOtp'));
+const ResetPassword = lazy(() => import('./components/ResetPassword'));
 const Dashboard = lazy(() => import('./components/Dashboard'));
 const AdminLogin = lazy(() => import('./components/AdminLogin'));
 const ChatWidget = lazy(() => import('./components/ChatWidget'));
@@ -80,6 +85,11 @@ function App() {
                   <Route path="/" element={<Landing />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
+                  <Route path="/verify-signup-otp" element={<VerifySignupOtp />} />
+                  <Route path="/verify-login-otp" element={<VerifyLoginOtp />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/verify-reset-otp" element={<VerifyResetOtp />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/admin-login" element={<AdminLogin />} />
                   <Route path="/hotels" element={<HotelsList />} />

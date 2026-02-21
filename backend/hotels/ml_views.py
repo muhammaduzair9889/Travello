@@ -9,8 +9,6 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.cache import cache
 import logging
 
-from ml_system.training.recommendation_engine import RecommendationEngine
-
 logger = logging.getLogger(__name__)
 
 
@@ -77,6 +75,7 @@ class MLRecommendationsView(APIView):
         """Lazy load recommendation engine"""
         if self.engine is None:
             try:
+                from ml_system.training.recommendation_engine import RecommendationEngine
                 self.engine = RecommendationEngine()
                 logger.info("✓ Loaded RecommendationEngine")
             except FileNotFoundError as e:
@@ -187,6 +186,7 @@ class SimilarItemsView(APIView):
     def _get_engine(self):
         """Lazy load recommendation engine"""
         if self.engine is None:
+            from ml_system.training.recommendation_engine import RecommendationEngine
             self.engine = RecommendationEngine()
         return self.engine
     

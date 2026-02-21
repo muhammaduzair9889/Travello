@@ -37,8 +37,29 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 second timeout
+  timeout: 30000, // 30 second timeout
 });
+
+const AUTH_EXEMPT_PATHS = [
+  '/auth/signup/',
+  '/auth/login/',
+  '/auth/admin/login/',
+  '/auth/verify-captcha/',
+  '/auth/api/signup-otp/',
+  '/auth/api/verify-signup-otp/',
+  '/auth/api/login-otp/',
+  '/auth/api/verify-login-otp/',
+  '/auth/api/request-otp/',
+  '/auth/api/verify-password-reset-otp-only/',
+  '/auth/api/verify-password-reset-otp/',
+  '/auth/google/login/',
+  '/auth/chat/',
+];
+
+const isAuthExemptRequest = (config) => {
+  const url = config?.url || '';
+  return AUTH_EXEMPT_PATHS.some((path) => url.includes(path));
+};
 
 // Helper to pick correct token set (user vs admin)
 const resolveAuthTokens = () => {
@@ -57,7 +78,7 @@ const resolveAuthTokens = () => {
 api.interceptors.request.use(
   (config) => {
     const { access } = resolveAuthTokens();
-    if (access) {
+    if (access && !isAuthExemptRequest(config)) {
       config.headers.Authorization = `Bearer ${access}`;
     }
     return config;
@@ -77,6 +98,16 @@ api.interceptors.response.use(
     if (!error.response) {
       console.error('Network error:', error.message);
       // Provide detailed error information
+      if (error.code === 'ECONNABORTED') {
+        return Promise.reject({
+          message: 'Request timeout. Please try again.',
+          status: 'timeout',
+          details: {
+            apiUrl: API_BASE_URL,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      }
       const errorObj = {
         message: error.message || 'Network error. Please check your connection.',
         status: 'network_error',
@@ -91,7 +122,7 @@ api.interceptors.response.use(
       return Promise.reject(errorObj);
     }
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthExemptRequest(originalRequest)) {
       originalRequest._retry = true;
 
       const { refresh, isAdmin } = resolveAuthTokens();
@@ -136,15 +167,23 @@ api.interceptors.response.use(
 );
 
 export const authAPI = {
-  signup: (userData) => api.post('/signup/', userData),
-  login: (credentials) => api.post('/login/', credentials),
-  adminLogin: (credentials) => api.post('/admin/login/', credentials),
-  verifyCaptcha: (token) => api.post('/verify-captcha/', { token }),
+  signup: (userData) => api.post('/auth/signup/', userData),
+  login: (credentials) => api.post('/auth/login/', credentials),
+  adminLogin: (credentials) => api.post('/auth/admin/login/', credentials),
+  verifyCaptcha: (token) => api.post('/auth/verify-captcha/', { token }),
+  signupOtp: (userData) => api.post('/auth/api/signup-otp/', userData),
+  verifySignupOtp: (payload) => api.post('/auth/api/verify-signup-otp/', payload),
+  loginOtp: (credentials) => api.post('/auth/api/login-otp/', credentials),
+  verifyLoginOtp: (payload) => api.post('/auth/api/verify-login-otp/', payload),
+  requestPasswordResetOtp: (payload) => api.post('/auth/api/request-otp/', payload),
+  verifyPasswordResetOtpOnly: (payload) => api.post('/auth/api/verify-password-reset-otp-only/', payload),
+  resetPasswordWithOtp: (payload) => api.post('/auth/api/verify-password-reset-otp/', payload),
+  googleLogin: (payload) => api.post('/auth/google/login/', payload),
 };
 
 export const chatAPI = {
   sendMessage: (message) => {
-    return axios.post(`${API_BASE_URL}/chat/`, { message }, {
+    return axios.post(`${API_BASE_URL}/auth/chat/`, { message }, {
       headers: {
         'Content-Type': 'application/json',
       },

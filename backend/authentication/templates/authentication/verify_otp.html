@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP - Travello</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .container h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .container p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .info-box {
+            background-color: #e7f3ff;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 3px;
+            font-size: 13px;
+            color: #004085;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .otp-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 24px;
+            text-align: center;
+            letter-spacing: 5px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .otp-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .error-message {
+            color: #dc3545;
+            font-size: 13px;
+            margin-top: 5px;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 3px;
+            border-left: 3px solid #dc3545;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .resend-otp {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .resend-otp a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .resend-otp a:hover {
+            text-decoration: underline;
+        }
+        
+        .timer {
+            text-align: center;
+            color: #dc3545;
+            font-weight: bold;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .timer.warning {
+            color: #ff6b6b;
+        }
+        
+        .security-note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin-top: 20px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✓ Verify Your Email</h1>
+        <p>We've sent a 6-digit code to<br><strong>{{ email }}</strong></p>
+        
+        <div class="info-box">
+            <strong>Tip:</strong> Check your email including the spam folder. The code expires in 5 minutes.
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- OTP Input -->
+            <div class="form-group">
+                <label for="{{ form.otp_code.id_for_label }}">Enter Your OTP Code</label>
+                <input 
+                    type="text" 
+                    name="{{ form.otp_code.name }}" 
+                    id="{{ form.otp_code.id_for_label }}"
+                    class="otp-input"
+                    placeholder="000000"
+                    maxlength="6"
+                    inputmode="numeric"
+                    pattern="[0-9]{6}"
+                    required
+                />
+                {% if form.otp_code.errors %}
+                    <div class="error-message">{{ form.otp_code.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <!-- Non-field Errors -->
+            {% if form.non_field_errors %}
+                {% for error in form.non_field_errors %}
+                    <div class="error-message">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Verify Button -->
+            <button type="submit" class="btn">Verify OTP</button>
+        </form>
+        
+        <!-- Resend OTP -->
+        <div class="resend-otp">
+            Didn't receive the code? 
+            <a href="{% url 'signup_page' %}">Request a new code</a>
+        </div>
+        
+        <!-- Security Note -->
+        <div class="security-note">
+            <strong>🔒 Security:</strong> Never share your OTP with anyone. We will never ask for this code.
+        </div>
+    </div>
+    
+    <script>
+        // Auto-focus on numeric input
+        const input = document.querySelector('.otp-input');
+        
+        input.addEventListener('input', function(e) {
+            // Remove non-numeric characters
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // Auto-submit when 6 digits entered
+            if (this.value.length === 6) {
+                // Optional: auto-submit after a brief delay
+                // setTimeout(() => this.form.submit(), 500);
+            }
+        });
+        
+        input.addEventListener('keypress', function(e) {
+            if (!/[0-9]/.test(e.key)) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

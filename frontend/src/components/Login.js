@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { GoogleLogin } from '@react-oauth/google';
 import { authAPI } from '../services/api';
 
 const logoUrl = 'https://cdn-icons-png.flaticon.com/512/854/854878.png'; // Travello logo
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -81,22 +83,23 @@ const Login = () => {
     }
 
     try {
-      const loginMethod = isAdminLogin ? authAPI.adminLogin : authAPI.login;
+      const loginMethod = isAdminLogin ? authAPI.adminLogin : authAPI.loginOtp;
       const response = await loginMethod({
         email: formData.email,
         password: formData.password,
         recaptcha_token: recaptchaToken,
       });
-      localStorage.setItem('access_token', response.data.tokens.access);
-      localStorage.setItem('refresh_token', response.data.tokens.refresh);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      localStorage.setItem('isAdmin', isAdminLogin ? 'true' : 'false');
-      
-      // Navigate to appropriate dashboard based on user type
+
       if (isAdminLogin) {
+        localStorage.setItem('access_token', response.data.tokens.access);
+        localStorage.setItem('refresh_token', response.data.tokens.refresh);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('isAdmin', 'true');
         navigate('/admin-dashboard');
       } else {
-        navigate('/dashboard');
+        const nextEmail = response?.data?.email || formData.email;
+        localStorage.setItem('isAdmin', 'false');
+        navigate('/verify-login-otp', { state: { email: nextEmail, password: formData.password } });
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -129,6 +132,25 @@ const Login = () => {
     setRecaptchaToken('');
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await authAPI.googleLogin({
+        credential: credentialResponse.credential,
+      });
+      localStorage.setItem('access_token', response.data.tokens.access);
+      localStorage.setItem('refresh_token', response.data.tokens.refresh);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('isAdmin', 'false');
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Google login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-400 to-indigo-300 py-8 px-2">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-10 flex flex-col items-center transition-all duration-300 border border-blue-100">
@@ -146,6 +168,11 @@ const Login = () => {
             Don't have an account?{' '}
             <Link to="/signup" className="text-indigo-700 hover:underline font-semibold">Sign up</Link>
           </p>
+        )}
+        {location.state?.message && (
+          <div className="w-full mb-4 bg-green-100 border border-green-200 text-green-800 px-4 py-3 rounded-md">
+            {location.state.message}
+          </div>
         )}
         <form className="w-full space-y-4" onSubmit={handleSubmit} autoComplete="off">
           <div className="relative">
@@ -236,6 +263,22 @@ const Login = () => {
             ) : (isAdminLogin ? 'Admin Sign in' : 'Sign in')}
           </button>
         </form>
+        {!isAdminLogin && (
+          <div className="w-full mt-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-px bg-blue-200 flex-1" />
+              <span className="text-xs text-blue-500">OR</span>
+              <div className="h-px bg-blue-200 flex-1" />
+            </div>
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError('Google login failed. Please try again.')}
+                useOneTap={false}
+              />
+            </div>
+          </div>
+        )}
         <div className="w-full mt-4 pt-4 border-t border-blue-200">
           <button
             type="button"

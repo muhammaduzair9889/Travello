@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { GoogleLogin } from '@react-oauth/google';
 import { authAPI } from '../services/api';
 
 const logoUrl = 'https://cdn-icons-png.flaticon.com/512/854/854878.png'; // Travello logo
@@ -130,14 +131,13 @@ const Signup = () => {
     }
 
     try {
-      const response = await authAPI.signup({
-        ...formData,
+      const response = await authAPI.signupOtp({
+        email: formData.email,
+        password: formData.password,
         recaptcha_token: recaptchaToken,
       });
-      localStorage.setItem('access_token', response.data.tokens.access);
-      localStorage.setItem('refresh_token', response.data.tokens.refresh);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      navigate('/dashboard');
+      const nextEmail = response?.data?.email || formData.email;
+      navigate('/verify-signup-otp', { state: { email: nextEmail } });
     } catch (error) {
       console.error('Signup error:', error);
       
@@ -163,6 +163,25 @@ const Signup = () => {
       }
       
       setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await authAPI.googleLogin({
+        credential: credentialResponse.credential,
+      });
+      localStorage.setItem('access_token', response.data.tokens.access);
+      localStorage.setItem('refresh_token', response.data.tokens.refresh);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('isAdmin', 'false');
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Google signup failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -299,6 +318,20 @@ const Signup = () => {
             ) : 'Create account'}
           </button>
         </form>
+        <div className="w-full mt-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-px bg-blue-200 flex-1" />
+            <span className="text-xs text-blue-500">OR</span>
+            <div className="h-px bg-blue-200 flex-1" />
+          </div>
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google signup failed. Please try again.')}
+              useOneTap={false}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

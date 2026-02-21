@@ -17,7 +17,7 @@ def api_root(request):
         'version': '1.0',
         'endpoints': {
             'admin': '/admin/',
-            'authentication': '/api/auth/',
+            'auth': '/api/auth/',
             'hotels': '/api/hotels/',
             'bookings': '/api/bookings/',
             'scraper': '/api/scraper/',
@@ -30,7 +30,7 @@ def api_root(request):
 urlpatterns = [
     path('', api_root, name='api_root'),
     path('admin/', admin.site.urls),
-    path('api/', include('authentication.urls')),
+    path('api/auth/', include('authentication.urls')),
     path('api/', include('hotels.urls')),
     path('api/scraper/', include('scraper.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

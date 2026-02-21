@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 5px 5px 0 0;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .otp-box {
+            background-color: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .otp-code {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            color: #667eea;
+            margin: 0;
+        }
+        .footer {
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+        }
+        .alert {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Your Login Code</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hello {{ user_email|default:"User" }},</p>
+            
+            <p>We received a login request for your Travello account. Use the code below to complete your login.</p>
+            
+            <div class="otp-box">
+                <p style="margin-top: 0; color: #666;">Your Login Code</p>
+                <h2 class="otp-code">{{ otp_code }}</h2>
+                <p style="color: #666; margin-bottom: 0;">This code expires in <strong>{{ expires_in }}</strong></p>
+            </div>
+            
+            <div class="alert">
+                <strong>⚠️ Security Alert:</strong> If you did not attempt to log in, your account may be at risk. Please change your password immediately or contact our support team.
+            </div>
+            
+            <p><strong>Steps to Login:</strong></p>
+            <ol>
+                <li>Enter your email and password</li>
+                <li>Enter the above code on the verification page</li>
+                <li>Access your Travello account</li>
+            </ol>
+            
+            <p>Never share this code with anyone. Travello staff will never ask for this code.</p>
+            
+            <p>Best regards,<br><strong>The Travello Team</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated email from Travello. Please do not reply to this email.</p>
+            <p>&copy; 2024 Travello. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

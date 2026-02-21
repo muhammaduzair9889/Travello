@@ -282,6 +282,10 @@ if not DEBUG:
 RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='')
 RECAPTCHA_SITE_KEY = config('RECAPTCHA_SITE_KEY', default='')
 
+# Google OAuth Settings
+GOOGLE_OAUTH_CLIENT_ID = config('GOOGLE_OAUTH_CLIENT_ID', default='')
+GOOGLE_OAUTH_CLIENT_SECRET = config('GOOGLE_OAUTH_CLIENT_SECRET', default='')
+
 # Validation: reCAPTCHA keys should be set in production
 if not DEBUG and not RECAPTCHA_SECRET_KEY:
     import warnings
@@ -319,3 +323,21 @@ STRIPE_CURRENCY_FALLBACK = config('STRIPE_CURRENCY_FALLBACK', default='USD')
 # Frontend payment URLs
 FRONTEND_PAYMENT_SUCCESS_URL = config('FRONTEND_PAYMENT_SUCCESS_URL', default='http://localhost:3000/payment-success')
 FRONTEND_PAYMENT_CANCEL_URL = config('FRONTEND_PAYMENT_CANCEL_URL', default='http://localhost:3000/payment-cancel')
+
+# ============================================
+# EMAIL CONFIGURATION (Gmail SMTP)
+# ============================================
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
+
+# OTP Settings
+OTP_EXPIRY_MINUTES = config('OTP_EXPIRY_MINUTES', default=5, cast=int)
+OTP_MAX_ATTEMPTS = config('OTP_MAX_ATTEMPTS', default=5, cast=int)
+
+# Email validation
+VALIDATE_EMAIL_ON_SIGNUP = config('VALIDATE_EMAIL_ON_SIGNUP', default=True, cast=bool)
