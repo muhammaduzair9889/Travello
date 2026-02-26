@@ -266,22 +266,9 @@ export const paymentAPI = {
   getBookingStatus: (bookingId) => api.get(`/payments/booking/${bookingId}/status/`),
 };
 
-export const itineraryAPI = {
-  getPlaces: (city = 'Lahore') => api.get('/itineraries/places/', { params: { city } }),
-  generate: (payload) => api.post('/itineraries/generate/', payload),
-  list: () => api.get('/itineraries/'),
-  get: (itineraryId) => api.get(`/itineraries/${itineraryId}/`),
-  update: (itineraryId, payload) => api.patch(`/itineraries/${itineraryId}/`, payload),
-  regenerateDay: (itineraryId, dayIndex) =>
-    api.post(`/itineraries/${itineraryId}/regenerate-day/`, { day_index: dayIndex }),
-  replacePlace: (itineraryId, dayIndex, itemIndex, newPlaceId = null) =>
-    api.post(`/itineraries/${itineraryId}/replace-place/`, {
-      day_index: dayIndex,
-      item_index: itemIndex,
-      new_place_id: newPlaceId,
-    }),
-  removePlace: (itineraryId, dayIndex, itemIndex) =>
-    api.post(`/itineraries/${itineraryId}/remove-place/`, { day_index: dayIndex, item_index: itemIndex }),
+export const recommendationAPI = {
+  getRecommendations: (preferences) => api.post('/recommendations/', preferences, { timeout: 120000 }),
+  getDefaultRecommendations: () => api.get('/recommendations/', { timeout: 120000 }),
 };
 
 export default api;

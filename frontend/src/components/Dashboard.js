@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hotelAPI, bookingAPI } from '../services/api';
+import RecommendationWidget from './RecommendationWidget';
 import { 
   FaHotel, 
   FaPlane, 
@@ -35,7 +36,6 @@ import {
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import ItineraryPlanner from './ItineraryPlanner';
 
 // Fix for default marker icon in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -57,11 +57,6 @@ const features = [
     description: 'Discover tours and activities.',
   },
   {
-    name: 'AI Itinerary',
-    icon: Calendar,
-    description: 'Generate and customize a multi-day itinerary.',
-  },
-  {
     name: 'My Bookings',
     icon: FaBook,
     description: 'View and manage your bookings.',
@@ -70,6 +65,11 @@ const features = [
     name: 'Browse Hotels',
     icon: FaSearch,
     description: 'Browse all available hotels.',
+  },
+  {
+    name: 'AI Recommendations',
+    icon: FaStar,
+    description: 'Get personalized hotel recommendations.',
   },
   {
     name: 'Smart Packing Checklist',
@@ -1845,18 +1845,16 @@ const Dashboard = () => {
             </>
           )}
 
-          {/* AI Itinerary Section */}
-          {activeFeature === 'AI Itinerary' && (
-            <div>
-              <ItineraryPlanner />
-            </div>
-          )}
-
           {/* Sightseeing Section */}
           {activeFeature === 'Sightseeing' && (
             <div>
               <InteractiveMap />
             </div>
+          )}
+
+          {/* AI Recommendations Section */}
+          {activeFeature === 'AI Recommendations' && (
+            <RecommendationWidget />
           )}
 
           {/* Bookings Section */}

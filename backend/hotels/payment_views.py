@@ -108,7 +108,10 @@ class CreatePaymentSessionView(APIView):
         
         try:
             with transaction.atomic():
-                # Get or create payment record
+                # Delete any failed Payment record for this booking
+                from hotels.models import Payment
+                Payment.objects.filter(booking=booking, status='FAILED').delete()
+                # Always create a new Payment record for each booking if payment is not already processing or succeeded
                 payment, created = Payment.objects.get_or_create(
                     booking=booking,
                     defaults={
@@ -117,7 +120,6 @@ class CreatePaymentSessionView(APIView):
                         'status': 'PENDING',
                     }
                 )
-                
                 # Prevent creating multiple sessions for same booking
                 if not created and payment.status in ['PROCESSING', 'SUCCEEDED']:
                     logger.warning(f"Attempt to create session for already paid booking {booking.id}")
@@ -125,12 +127,8 @@ class CreatePaymentSessionView(APIView):
                         {'success': False, 'error': 'Payment already initiated or completed'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-                
                 currency = STRIPE_CURRENCY_PRIMARY
                 amount_cents = int(float(booking.total_price) * 100)
-                
-                # Build Checkout Session parameters — Stripe creates
-                # its own PaymentIntent automatically in mode='payment'.
                 session_kwargs = dict(
                     mode='payment',
                     payment_method_types=['card'],
@@ -162,11 +160,9 @@ class CreatePaymentSessionView(APIView):
                     success_url=f'{FRONTEND_SUCCESS_URL}?session_id={{CHECKOUT_SESSION_ID}}&booking_id={booking.id}',
                     cancel_url=f'{FRONTEND_CANCEL_URL}?booking_id={booking.id}',
                 )
-                
                 try:
                     session = stripe.checkout.Session.create(**session_kwargs)
                 except stripe.error.InvalidRequestError as e:
-                    # Fallback to USD if primary currency not supported
                     logger.warning(
                         f"Stripe currency {currency} not supported, "
                         f"falling back to {STRIPE_CURRENCY_FALLBACK}: {str(e)}"
@@ -175,19 +171,24 @@ class CreatePaymentSessionView(APIView):
                     payment.currency = currency
                     session_kwargs['line_items'][0]['price_data']['currency'] = currency
                     session = stripe.checkout.Session.create(**session_kwargs)
-                
-                # Update payment record with session info
+                # Always update with new intent and session
                 payment.stripe_payment_intent = session.payment_intent or ''
                 payment.stripe_session_id = session.id
                 payment.status = 'PROCESSING'
-                payment.save()
-                
+                try:
+                    payment.save()
+                except Exception as save_error:
+                    # Handle duplicate intent gracefully
+                    logger.error(f"Payment save failed: {save_error}")
+                    return Response(
+                        {'success': False, 'error': 'Payment session creation failed due to duplicate intent. Please try again.'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
                 logger.info(
                     f"Payment session created - Booking: {booking.id}, "
                     f"Session: {session.id}, URL: {session.url}, "
                     f"Amount: {booking.total_price} {currency}"
                 )
-                
                 return Response({
                     'success': True,
                     'message': 'Payment session created',

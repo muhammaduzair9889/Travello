@@ -4,6 +4,7 @@ from .views import (
     HotelViewSet, BookingViewSet, RealTimeHotelSearchView, 
     RoomAvailabilityView, BookingPreviewView, ScrapedHotelBookingView
 )
+from .recommendation_views import DestinationRecommendationView
 
 # Try importing ML views, but make them optional
 ML_VIEWS_AVAILABLE = False
@@ -38,6 +39,9 @@ urlpatterns += [
     path('hotels/check-availability/', RoomAvailabilityView.as_view(), name='check-availability'),
     path('bookings/preview/', BookingPreviewView.as_view(), name='booking-preview'),
     path('bookings/scraped/', ScrapedHotelBookingView.as_view(), name='scraped-hotel-booking'),
+    
+    # Recommendation engine endpoint
+    path('recommendations/', DestinationRecommendationView.as_view(), name='recommendations'),
     
     # Router endpoints
     path('', include(router.urls)),
