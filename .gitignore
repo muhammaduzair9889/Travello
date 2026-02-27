@@ -294,6 +294,12 @@ PERFORMANCE*.md
 secrets.json
 credentials.json
 
+# Scraper dump files (may contain embedded API tokens/secrets)
+backend/scraper/page_dump.html
+backend/scraper/test_parse_out.txt
+backend/scraper/*_dump.html
+backend/scraper/*_out.txt
+
 # ============================================
 # Misc
 # ============================================
