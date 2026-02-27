@@ -134,22 +134,44 @@ export const searchLahoreHotels = async (params = {}) => {
           description: amenitiesArray.length > 0
             ? amenitiesArray.join(' • ')
             : `${hotel.name} in Lahore. Real-time data from Booking.com.`,
-          latitude: 31.5204 + (Math.random() - 0.5) * 0.1, // Approximate Lahore coords
+          latitude: 31.5204 + (Math.random() - 0.5) * 0.1,
           longitude: 74.3587 + (Math.random() - 0.5) * 0.1,
           booking_url: hotel.url || 'https://www.booking.com',
           lastBooked: `${Math.floor(Math.random() * 5) + 1} hours ago`,
           popularAmenities: amenitiesArray.slice(0, 4),
-          availability: hotel.availability || 'Available',
+          availability: hotel.availability_status || hotel.availability || 'Available',
           is_limited: hotel.is_limited || false,
           has_deal: hotel.has_deal || null,
           original_price: hotel.original_price || null,
+          // New fields from upgraded scraper
+          max_occupancy: hotel.max_occupancy || 2,
+          occupancy_match: hotel.occupancy_match !== false,
+          room_type: hotel.room_type || 'double',
+          meal_plan: hotel.meal_plan || 'room_only',
+          cancellation_policy: hotel.cancellation_policy || 'standard',
+          price_per_night: hotel.price_per_night || pricePerNight,
+          total_stay_price: hotel.total_stay_price || null,
           is_real_time: true,
           source: 'booking.com'
         };
       });
 
-      console.log(`✅ Transformed ${hotels.length} hotels for display`);
-      return hotels;
+      // Add metadata from the scraper
+      const meta = response.data.meta || {};
+      const result = {
+        hotels,
+        meta: {
+          verified: meta.verified !== false,
+          coverage_pct: meta.coverage_pct || null,
+          reported_count: meta.reported_count || null,
+          scraped_count: meta.scraped_count || hotels.length,
+          verification_notes: meta.verification_notes || [],
+          elapsed_seconds: meta.elapsed_seconds || null,
+        }
+      };
+
+      console.log(`✅ Transformed ${hotels.length} hotels for display (verified=${result.meta.verified})`);
+      return result;
     }
 
     // If scraper returned no data

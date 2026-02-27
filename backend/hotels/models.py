@@ -1,7 +1,15 @@
+import uuid
+import random
+import string
 from django.db import models
 from django.core.validators import MinValueValidator
-from decimal import Decimal
+from django.utils import timezone
+from decimal import Decimal, ROUND_HALF_UP
 from authentication.models import User
+
+# Tax constants for Pakistan
+GST_RATE = Decimal('0.16')   # 16% GST
+SERVICE_CHARGE_RATE = Decimal('0.05')  # 5% service charge
 
 
 class Hotel(models.Model):
@@ -205,6 +213,14 @@ class Booking(models.Model):
         default=1,
         validators=[MinValueValidator(1)]
     )
+    adults = models.IntegerField(
+        default=2,
+        validators=[MinValueValidator(1)]
+    )
+    children = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0)]
+    )
     check_in = models.DateField(db_index=True, null=True, blank=False)
     check_out = models.DateField(db_index=True, null=True, blank=False)
     total_price = models.DecimalField(
@@ -222,6 +238,45 @@ class Booking(models.Model):
         choices=STATUS_CHOICES,
         default='PENDING',
         db_index=True
+    )
+    
+    # Booking reference (human-friendly ID like TRV-A5K9M)
+    booking_reference = models.CharField(
+        max_length=12,
+        unique=True,
+        blank=True,
+        null=True,
+        db_index=True,
+        help_text='Human-friendly booking reference (e.g. TRV-A5K9M)'
+    )
+    
+    # Price breakdown
+    base_price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        blank=True, null=True,
+        help_text='Room price before tax'
+    )
+    tax_amount = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        blank=True, null=True,
+        help_text='GST (16%)'
+    )
+    service_charge = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        blank=True, null=True,
+        help_text='Service charge (5%)'
+    )
+    
+    # Room lock system — temporary hold during payment
+    room_locked_until = models.DateTimeField(
+        blank=True, null=True,
+        help_text='Room is held until this time during payment'
+    )
+    
+    # Invoice
+    invoice_number = models.CharField(
+        max_length=20, blank=True, null=True, unique=True,
+        help_text='Invoice number (e.g. INV-20260227-001)'
     )
     
     # Additional information
@@ -317,11 +372,87 @@ class Booking(models.Model):
         
         return is_available, available, message
     
+    @staticmethod
+    def generate_booking_reference():
+        """Generate a unique human-friendly booking reference like TRV-A5K9M"""
+        chars = string.ascii_uppercase + string.digits
+        while True:
+            ref = 'TRV-' + ''.join(random.choices(chars, k=5))
+            if not Booking.objects.filter(booking_reference=ref).exists():
+                return ref
+
+    @staticmethod
+    def generate_invoice_number():
+        """Generate a unique invoice number like INV-20260227-001"""
+        today = timezone.now().strftime('%Y%m%d')
+        prefix = f'INV-{today}-'
+        last = Booking.objects.filter(
+            invoice_number__startswith=prefix
+        ).order_by('-invoice_number').first()
+        if last and last.invoice_number:
+            try:
+                seq = int(last.invoice_number.split('-')[-1]) + 1
+            except (ValueError, IndexError):
+                seq = 1
+        else:
+            seq = 1
+        return f'{prefix}{seq:03d}'
+
+    def calculate_price_breakdown(self):
+        """Calculate base price, tax, service charge, total"""
+        if not self.room_type or not self.check_in or not self.check_out:
+            return
+        nights = max(1, (self.check_out - self.check_in).days)
+        self.base_price = (self.room_type.price_per_night * nights * self.rooms_booked).quantize(
+            Decimal('0.01'), rounding=ROUND_HALF_UP
+        )
+        self.tax_amount = (self.base_price * GST_RATE).quantize(
+            Decimal('0.01'), rounding=ROUND_HALF_UP
+        )
+        self.service_charge = (self.base_price * SERVICE_CHARGE_RATE).quantize(
+            Decimal('0.01'), rounding=ROUND_HALF_UP
+        )
+        self.total_price = self.base_price + self.tax_amount + self.service_charge
+
+    def lock_room(self, minutes=15):
+        """Temporarily lock the room for payment processing"""
+        self.room_locked_until = timezone.now() + timezone.timedelta(minutes=minutes)
+        self.save(update_fields=['room_locked_until'])
+
+    @property
+    def is_room_locked(self):
+        """Check if room is still locked (within hold period)"""
+        if not self.room_locked_until:
+            return False
+        return timezone.now() < self.room_locked_until
+
+    @property
+    def price_breakdown(self):
+        """Return price breakdown dict"""
+        return {
+            'base_price': float(self.base_price or 0),
+            'tax_rate': float(GST_RATE * 100),
+            'tax_amount': float(self.tax_amount or 0),
+            'service_charge_rate': float(SERVICE_CHARGE_RATE * 100),
+            'service_charge': float(self.service_charge or 0),
+            'total_price': float(self.total_price or 0),
+            'currency': 'PKR',
+            'nights': self.number_of_nights,
+            'rooms': self.rooms_booked,
+            'price_per_night': float(self.room_type.price_per_night) if self.room_type else 0,
+        }
+
     def save(self, *args, **kwargs):
-        """Auto-calculate total price if not set"""
+        """Auto-calculate prices and generate reference"""
+        # Generate booking reference
+        if not self.booking_reference:
+            self.booking_reference = Booking.generate_booking_reference()
+        # Calculate price breakdown
         if not self.total_price and self.room_type and self.check_in and self.check_out:
-            nights = (self.check_out - self.check_in).days
-            self.total_price = self.room_type.price_per_night * nights * self.rooms_booked
+            self.calculate_price_breakdown()
+        # Generate invoice on payment
+        if self.status == 'PAID' and not self.invoice_number:
+            self.invoice_number = Booking.generate_invoice_number()
         super().save(*args, **kwargs)
     
     @property

@@ -51,6 +51,17 @@ class Itinerary(models.Model):
         BALANCED = 'BALANCED', 'Balanced'
         PACKED = 'PACKED', 'Packed'
 
+    class Mood(models.TextChoices):
+        RELAXING = 'RELAXING', 'Relaxing'
+        SPIRITUAL = 'SPIRITUAL', 'Spiritual'
+        HISTORICAL = 'HISTORICAL', 'Historical'
+        FOODIE = 'FOODIE', 'Foodie'
+        FUN = 'FUN', 'Fun & Entertainment'
+        SHOPPING = 'SHOPPING', 'Shopping'
+        NATURE = 'NATURE', 'Nature'
+        ROMANTIC = 'ROMANTIC', 'Romantic'
+        FAMILY = 'FAMILY', 'Family'
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='itineraries')
     city = models.CharField(max_length=120, db_index=True, default='Lahore')
 
@@ -61,12 +72,17 @@ class Itinerary(models.Model):
     budget_level = models.CharField(max_length=10, choices=Budget.choices, default=Budget.MEDIUM)
     interests = models.JSONField(default=list, blank=True)
     pace = models.CharField(max_length=10, choices=Pace.choices, default=Pace.BALANCED)
+    mood = models.CharField(max_length=12, choices=Mood.choices, blank=True, default='', help_text='Primary mood for trip')
 
     # Stored structure:
     # [
     #   { "date": "YYYY-MM-DD", "title": "...", "items": [ {place...}, ... ] }
     # ]
     days = models.JSONField(default=list, blank=True)
+
+    # Customization
+    locked_place_ids = models.JSONField(default=list, blank=True, help_text='Place IDs locked by user (survive regeneration)')
+    excluded_place_ids = models.JSONField(default=list, blank=True, help_text='Place IDs excluded from regeneration (history)')
 
     saved = models.BooleanField(default=True)
     notes = models.TextField(blank=True)
@@ -84,4 +100,36 @@ class Itinerary(models.Model):
 
     def __str__(self):
         return f"Itinerary {self.city} {self.start_date}->{self.end_date} ({self.user_id})"
+
+
+class JournalEntry(models.Model):
+    """
+    Travel journal for notes and photos during the trip.
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='journal_entries')
+    itinerary = models.ForeignKey(Itinerary, on_delete=models.CASCADE, related_name='journal_entries', null=True, blank=True)
+    
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    date = models.DateField(auto_now_add=True)
+    
+    # Store photo URLs as JSON list for simplicity
+    photos = models.JSONField(default=list, blank=True)
+    
+    # Optional category or tag
+    category = models.CharField(max_length=50, blank=True, default='General')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'itineraries_journalentry'
+        ordering = ['-date', '-created_at']
+        indexes = [
+            models.Index(fields=['user', 'date']),
+            models.Index(fields=['itinerary']),
+        ]
+
+    def __str__(self):
+        return f"Journal: {self.title} ({self.date})"
 

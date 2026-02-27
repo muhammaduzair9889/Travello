@@ -82,6 +82,11 @@ const features = [
     description: 'Document your travel memories and experiences.',
   },
   {
+    name: 'AI Itinerary',
+    icon: MapPin,
+    description: 'AI mood-based day-by-day trip planner for Lahore.',
+  },
+  {
     name: 'SOS Safety Toolkit',
     icon: Shield,
     description: 'Emergency contacts and safety resources.',
@@ -769,6 +774,10 @@ const Sidebar = ({ activeFeature, setActiveFeature }) => {
                     navigate('/hotels');
                   } else if (feature.name === 'My Bookings') {
                     navigate('/my-bookings');
+                  } else if (feature.name === 'AI Itinerary') {
+                    navigate('/itinerary');
+                  } else if (feature.name === 'Travel Journal') {
+                    navigate('/journal');
                   } else {
                     setActiveFeature(feature.name);
                   }

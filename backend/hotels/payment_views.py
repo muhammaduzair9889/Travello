@@ -371,6 +371,15 @@ def handle_payment_intent_succeeded(payment_intent):
                 payment = booking.payment
                 payment.status = 'SUCCEEDED'
                 payment.stripe_payment_intent = payment_intent['id']
+                # Check for existing Payment with this stripe_payment_intent
+                if payment.stripe_payment_intent:
+                    existing = Payment.objects.filter(stripe_payment_intent=payment.stripe_payment_intent).exclude(pk=payment.pk).first()
+                    if existing:
+                        logger.error(f"Duplicate stripe_payment_intent detected: {payment.stripe_payment_intent}")
+                        return Response(
+                            {'success': False, 'error': 'Duplicate payment intent. Please refresh and try again.'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
                 payment.save()
             except Payment.DoesNotExist:
                 logger.warning(f"Payment record not found for booking {booking_id}")
@@ -463,3 +472,417 @@ def get_booking_payment_status(request, booking_id):
             {'success': False, 'error': 'Error retrieving payment status'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+# ─────────────────────────────────────────────────────────────
+#  SIMULATION MODE  — Works without Stripe keys
+# ─────────────────────────────────────────────────────────────
+
+class SimulatedPaymentView(APIView):
+    """
+    POST /api/payments/simulate/
+    
+    Simulates a payment flow for MVP / development.
+    Supports:
+      - Credit/Debit Card (simulated validation)
+      - Cash on Arrival
+    
+    Request Body:
+    {
+        "booking_id": 123,
+        "payment_method": "card",   // "card" or "cash_on_arrival"
+        "card_number": "4242424242424242",  // only for card
+        "card_expiry": "12/28",            // only for card
+        "card_cvv": "123",                 // only for card
+        "card_holder": "John Doe"          // only for card
+    }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        booking_id = request.data.get('booking_id')
+        payment_method = request.data.get('payment_method', 'card')
+
+        if not booking_id:
+            return Response(
+                {'success': False, 'error': 'booking_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            booking = Booking.objects.select_related('hotel', 'room_type', 'user').get(id=booking_id)
+        except Booking.DoesNotExist:
+            return Response(
+                {'success': False, 'error': 'Booking not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Verify ownership
+        if booking.user != request.user and not request.user.is_staff:
+            return Response(
+                {'success': False, 'error': 'Access denied'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Already paid?
+        if booking.status == 'PAID':
+            return Response(
+                {'success': False, 'error': 'Booking is already paid'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if booking.status == 'CANCELLED':
+            return Response(
+                {'success': False, 'error': 'Cannot pay for a cancelled booking'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ── PRE-PAYMENT VALIDATION ──────────────────────────
+
+        # 1. Room still available?
+        if booking.room_type:
+            avail = booking.room_type.get_available_rooms(booking.check_in, booking.check_out)
+            if avail < booking.rooms_booked:
+                return Response({
+                    'success': False,
+                    'error': f'Room no longer available. Only {avail} left.',
+                    'validation_error': 'room_unavailable'
+                }, status=status.HTTP_409_CONFLICT)
+
+        # 2. Price unchanged check — recalculate
+        if booking.room_type and booking.check_in and booking.check_out:
+            from decimal import Decimal, ROUND_HALF_UP
+            from hotels.models import GST_RATE, SERVICE_CHARGE_RATE
+            nights = max(1, (booking.check_out - booking.check_in).days)
+            expected_base = (booking.room_type.price_per_night * nights * booking.rooms_booked)
+            expected_base = expected_base.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            if booking.base_price and booking.base_price != expected_base:
+                # Price has changed — update and notify
+                old_total = float(booking.total_price or 0)
+                booking.calculate_price_breakdown()
+                booking.save()
+                return Response({
+                    'success': False,
+                    'error': 'Price has been updated since booking was created.',
+                    'validation_error': 'price_changed',
+                    'old_total': old_total,
+                    'new_total': float(booking.total_price),
+                    'price_breakdown': booking.price_breakdown,
+                }, status=status.HTTP_409_CONFLICT)
+
+        # 3. Dates still valid?
+        from django.utils import timezone as tz
+        if booking.check_in and booking.check_in < tz.now().date():
+            return Response({
+                'success': False,
+                'error': 'Check-in date is in the past',
+                'validation_error': 'dates_invalid'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # 4. Adults match occupancy?
+        if booking.room_type and booking.adults:
+            if booking.adults > (booking.room_type.max_occupancy * booking.rooms_booked):
+                return Response({
+                    'success': False,
+                    'error': f'Total adults ({booking.adults}) exceeds maximum occupancy for {booking.rooms_booked} room(s).',
+                    'validation_error': 'occupancy_exceeded',
+                    'max_occupancy': booking.room_type.max_occupancy * booking.rooms_booked
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        # ── PROCESS PAYMENT ─────────────────────────────────
+
+        if payment_method == 'card':
+            # Simulated card validation
+            card_number = str(request.data.get('card_number', '')).replace(' ', '').replace('-', '')
+            card_expiry = request.data.get('card_expiry', '')
+            card_cvv = request.data.get('card_cvv', '')
+            card_holder = request.data.get('card_holder', '')
+
+            errors = []
+            if not card_number or len(card_number) < 13 or len(card_number) > 19:
+                errors.append('Invalid card number')
+            if not card_expiry or '/' not in card_expiry:
+                errors.append('Invalid expiry date (use MM/YY)')
+            if not card_cvv or len(card_cvv) < 3 or len(card_cvv) > 4:
+                errors.append('Invalid CVV')
+            if not card_holder or len(card_holder) < 2:
+                errors.append('Card holder name is required')
+
+            if errors:
+                return Response(
+                    {'success': False, 'error': '; '.join(errors), 'validation_errors': errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Determine card brand
+            brand = 'Unknown'
+            if card_number.startswith('4'):
+                brand = 'Visa'
+            elif card_number[:2] in ('51', '52', '53', '54', '55'):
+                brand = 'Mastercard'
+            elif card_number[:2] in ('34', '37'):
+                brand = 'Amex'
+
+            # Simulate successful payment
+            with transaction.atomic():
+                booking.status = 'PAID'
+                booking.payment_method = 'ONLINE'
+                if not booking.base_price:
+                    booking.calculate_price_breakdown()
+                booking.save()
+
+                # Create Payment record
+                payment, _ = Payment.objects.update_or_create(
+                    booking=booking,
+                    defaults={
+                        'amount': booking.total_price,
+                        'currency': 'PKR',
+                        'status': 'SUCCEEDED',
+                        'payment_method_type': 'card',
+                        'last4': card_number[-4:],
+                        'brand': brand,
+                        'stripe_payment_intent': f'sim_pi_{booking.booking_reference}',
+                        'metadata': {
+                            'simulated': True,
+                            'card_holder': card_holder,
+                            'card_brand': brand,
+                        }
+                    }
+                )
+
+            logger.info(f"Simulated card payment for booking {booking.id} ({booking.booking_reference})")
+
+            return Response({
+                'success': True,
+                'message': 'Payment successful (simulation mode)',
+                'booking_id': booking.id,
+                'booking_reference': booking.booking_reference,
+                'invoice_number': booking.invoice_number,
+                'payment_method': 'card',
+                'card_brand': brand,
+                'card_last4': card_number[-4:],
+                'price_breakdown': booking.price_breakdown,
+                'status': 'PAID'
+            })
+
+        elif payment_method == 'cash_on_arrival':
+            with transaction.atomic():
+                booking.status = 'CONFIRMED'
+                booking.payment_method = 'ARRIVAL'
+                if not booking.base_price:
+                    booking.calculate_price_breakdown()
+                booking.save()
+
+            logger.info(f"Cash on arrival confirmed for booking {booking.id} ({booking.booking_reference})")
+
+            return Response({
+                'success': True,
+                'message': 'Booking confirmed. Pay at the hotel upon arrival.',
+                'booking_id': booking.id,
+                'booking_reference': booking.booking_reference,
+                'payment_method': 'cash_on_arrival',
+                'price_breakdown': booking.price_breakdown,
+                'status': 'CONFIRMED'
+            })
+
+        else:
+            return Response(
+                {'success': False, 'error': f'Unsupported payment method: {payment_method}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class BookingPriceBreakdownView(APIView):
+    """
+    GET /api/payments/booking/{booking_id}/breakdown/
+    
+    Returns the price breakdown for a booking.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, booking_id):
+        try:
+            booking = Booking.objects.select_related('hotel', 'room_type').get(id=booking_id)
+        except Booking.DoesNotExist:
+            return Response({'success': False, 'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if booking.user != request.user and not request.user.is_staff:
+            return Response({'success': False, 'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Recalculate if missing
+        if not booking.base_price:
+            booking.calculate_price_breakdown()
+            booking.save()
+
+        return Response({
+            'success': True,
+            'booking_id': booking.id,
+            'booking_reference': booking.booking_reference,
+            'hotel_name': booking.hotel.name if booking.hotel else '',
+            'room_type': booking.room_type.get_type_display() if booking.room_type else '',
+            'check_in': str(booking.check_in),
+            'check_out': str(booking.check_out),
+            'price_breakdown': booking.price_breakdown,
+        })
+
+
+class BookingInvoiceView(APIView):
+    """
+    GET /api/payments/booking/{booking_id}/invoice/
+    
+    Returns a downloadable HTML invoice for a paid booking.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, booking_id):
+        from django.http import HttpResponse
+
+        try:
+            booking = Booking.objects.select_related('hotel', 'room_type', 'user').get(id=booking_id)
+        except Booking.DoesNotExist:
+            return Response({'success': False, 'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if booking.user != request.user and not request.user.is_staff:
+            return Response({'success': False, 'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        if booking.status not in ('PAID', 'CONFIRMED', 'COMPLETED'):
+            return Response({'success': False, 'error': 'Invoice only available for confirmed/paid bookings'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Ensure price breakdown exists
+        if not booking.base_price:
+            booking.calculate_price_breakdown()
+            booking.save()
+
+        hotel_name = booking.hotel.name if booking.hotel else 'N/A'
+        room_type = booking.room_type.get_type_display() if booking.room_type else 'N/A'
+        guest = booking.guest_name or (booking.user.get_full_name() if booking.user else 'Guest')
+        email = booking.guest_email or (booking.user.email if booking.user else '')
+
+        html = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Invoice {booking.invoice_number or booking.booking_reference}</title>
+<style>
+    body {{ font-family: 'Segoe UI', Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; color: #1a1a2e; }}
+    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; }}
+    .header h1 {{ margin: 0; font-size: 28px; }}
+    .header p {{ margin: 5px 0 0; opacity: 0.9; }}
+    .body {{ border: 1px solid #e2e8f0; border-top: none; padding: 30px; border-radius: 0 0 12px 12px; }}
+    .section {{ margin-bottom: 24px; }}
+    .section h3 {{ color: #667eea; margin-bottom: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }}
+    .row {{ display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }}
+    .row:last-child {{ border-bottom: none; }}
+    .label {{ color: #64748b; }}
+    .value {{ font-weight: 600; }}
+    .total-row {{ background: #f8fafc; padding: 12px; border-radius: 8px; margin-top: 8px; font-size: 18px; }}
+    .total-row .value {{ color: #667eea; }}
+    .badge {{ background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }}
+    .footer {{ text-align: center; margin-top: 30px; color: #94a3b8; font-size: 12px; }}
+</style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧳 Travello</h1>
+        <p>Booking Confirmation & Invoice</p>
+    </div>
+    <div class="body">
+        <div class="section">
+            <h3>Booking Details</h3>
+            <div class="row"><span class="label">Booking Reference</span><span class="value">{booking.booking_reference}</span></div>
+            <div class="row"><span class="label">Invoice Number</span><span class="value">{booking.invoice_number or 'Pending'}</span></div>
+            <div class="row"><span class="label">Status</span><span class="badge">{booking.status}</span></div>
+        </div>
+        
+        <div class="section">
+            <h3>Guest Information</h3>
+            <div class="row"><span class="label">Guest Name</span><span class="value">{guest}</span></div>
+            <div class="row"><span class="label">Email</span><span class="value">{email}</span></div>
+            <div class="row"><span class="label">Phone</span><span class="value">{booking.guest_phone or 'N/A'}</span></div>
+        </div>
+        
+        <div class="section">
+            <h3>Hotel & Room</h3>
+            <div class="row"><span class="label">Hotel</span><span class="value">{hotel_name}</span></div>
+            <div class="row"><span class="label">Room Type</span><span class="value">{room_type}</span></div>
+            <div class="row"><span class="label">Rooms</span><span class="value">{booking.rooms_booked}</span></div>
+            <div class="row"><span class="label">Check-in</span><span class="value">{booking.check_in}</span></div>
+            <div class="row"><span class="label">Check-out</span><span class="value">{booking.check_out}</span></div>
+            <div class="row"><span class="label">Nights</span><span class="value">{booking.number_of_nights}</span></div>
+        </div>
+        
+        <div class="section">
+            <h3>Price Breakdown</h3>
+            <div class="row"><span class="label">Room Rate ({booking.number_of_nights} nights × {booking.rooms_booked} room(s))</span><span class="value">PKR {booking.base_price or booking.total_price}</span></div>
+            <div class="row"><span class="label">GST (16%)</span><span class="value">PKR {booking.tax_amount or 0}</span></div>
+            <div class="row"><span class="label">Service Charge (5%)</span><span class="value">PKR {booking.service_charge or 0}</span></div>
+            <div class="row total-row"><span class="label">Total</span><span class="value">PKR {booking.total_price}</span></div>
+        </div>
+        
+        <div class="section">
+            <h3>Payment</h3>
+            <div class="row"><span class="label">Payment Method</span><span class="value">{booking.get_payment_method_display()}</span></div>
+            <div class="row"><span class="label">Date</span><span class="value">{booking.updated_at.strftime('%B %d, %Y %I:%M %p') if booking.updated_at else 'N/A'}</span></div>
+        </div>
+    </div>
+    <div class="footer">
+        <p>Thank you for booking with Travello! 🌍</p>
+        <p>This is a system-generated invoice. No signature required.</p>
+    </div>
+</body>
+</html>"""
+
+        response = HttpResponse(html, content_type='text/html')
+        response['Content-Disposition'] = f'inline; filename="invoice_{booking.booking_reference}.html"'
+        return response
+
+
+class BookingConfirmationEmailView(APIView):
+    """
+    POST /api/payments/booking/{booking_id}/send-confirmation/
+    
+    Simulates sending a confirmation email (stores in DB metadata).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, booking_id):
+        try:
+            booking = Booking.objects.select_related('hotel', 'room_type', 'user').get(id=booking_id)
+        except Booking.DoesNotExist:
+            return Response({'success': False, 'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if booking.user != request.user and not request.user.is_staff:
+            return Response({'success': False, 'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Simulate email
+        email_data = {
+            'to': booking.guest_email or booking.user.email,
+            'subject': f'Booking Confirmed - {booking.booking_reference}',
+            'hotel': booking.hotel.name if booking.hotel else 'N/A',
+            'room': booking.room_type.get_type_display() if booking.room_type else 'N/A',
+            'check_in': str(booking.check_in),
+            'check_out': str(booking.check_out),
+            'total': float(booking.total_price or 0),
+            'status': booking.status,
+            'sent_at': tz.now().isoformat() if 'tz' in dir() else __import__('django.utils.timezone', fromlist=['now']).now().isoformat(),
+            'simulated': True,
+        }
+
+        # Store in booking payment metadata
+        try:
+            payment = booking.payment
+            meta = payment.metadata or {}
+            meta['confirmation_email'] = email_data
+            payment.metadata = meta
+            payment.save(update_fields=['metadata'])
+        except Payment.DoesNotExist:
+            pass  # No payment record yet
+
+        logger.info(f"Simulated confirmation email for booking {booking.booking_reference} to {email_data['to']}")
+
+        return Response({
+            'success': True,
+            'message': f'Confirmation email sent to {email_data["to"]} (simulated)',
+            'email_data': email_data
+        })
+

@@ -20,8 +20,9 @@ class ItinerarySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'city',
             'start_date', 'end_date', 'travelers',
-            'budget_level', 'interests', 'pace',
+            'budget_level', 'interests', 'pace', 'mood',
             'days', 'saved', 'notes',
+            'locked_place_ids', 'excluded_place_ids',
             'created_at', 'updated_at',
         ]
 
@@ -35,9 +36,9 @@ class ItineraryGenerateSerializer(serializers.Serializer):
     budget_level = serializers.ChoiceField(choices=Itinerary.Budget.choices, default=Itinerary.Budget.MEDIUM)
     interests = serializers.ListField(child=serializers.CharField(), default=list, required=False)
     pace = serializers.ChoiceField(choices=Itinerary.Pace.choices, default=Itinerary.Pace.BALANCED)
+    mood = serializers.ChoiceField(choices=Itinerary.Mood.choices, default='', required=False, allow_blank=True)
 
     def validate(self, attrs):
         if attrs['end_date'] <= attrs['start_date']:
             raise serializers.ValidationError("end_date must be after start_date")
         return attrs
-

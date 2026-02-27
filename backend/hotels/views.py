@@ -146,9 +146,11 @@ class BookingViewSet(viewsets.ModelViewSet):
         elif payment_method == 'ONLINE':
             # Online payment - booking stays PENDING until payment confirmed
             booking.status = 'PENDING'
+            # Lock the room for 15 minutes
+            booking.lock_room(minutes=15)
             booking.save()
             
-            logger.info(f"Booking {booking.id} created with ONLINE payment method - awaiting payment")
+            logger.info(f"Booking {booking.id} created with ONLINE payment method - awaiting payment (locked for 15m)")
         
         # Return full booking details
         response_serializer = BookingSerializer(booking)
@@ -639,14 +641,19 @@ class ScrapedHotelBookingView(APIView):
                 hotel=hotel,
                 room_type=room_type,
                 rooms_booked=rooms_booked,
+                adults=int(data.get('adults', 2)),
+                children=int(data.get('children', 0)),
                 check_in=check_in,
                 check_out=check_out,
                 total_price=total_price,
                 payment_method='ONLINE',
                 status='PENDING',
-                guest_name=request.user.get_full_name() or request.user.username,
-                guest_email=request.user.email,
+                guest_name=request.data.get('guest_name', request.user.get_full_name() or request.user.username),
+                guest_email=request.data.get('guest_email', request.user.email),
             )
+            
+            # Lock the room for 15 minutes
+            booking.lock_room(minutes=15)
             
             response_serializer = BookingSerializer(booking)
             logger.info(f"Scraped hotel booking {booking.id} created for hotel '{hotel.name}'")

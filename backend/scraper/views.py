@@ -181,31 +181,84 @@ def scrape_hotels(request):
                 'meta': meta
             })
 
-        # Accuracy validation rule: compare with Booking.com visible count (best-effort)
+        # Accuracy validation — soft warning, never block results
         reported_count = meta.get('reported_count')
+        verified = meta.get('verified', True)
+        verification_notes = meta.get('verification_notes', [])
         if isinstance(reported_count, int) and reported_count > 0:
-            if len(hotels) < int(reported_count * 0.8):
+            coverage_pct = round((len(hotels) / reported_count) * 100)
+            if coverage_pct < 30:
+                verified = False
+                verification_notes.append(
+                    f'Low coverage: scraped {len(hotels)}/{reported_count} ({coverage_pct}%)'
+                )
                 logger.warning(
-                    f"Accuracy validation failed: scraped={len(hotels)} reported={reported_count} (>20% diff)"
+                    f"Low accuracy: scraped={len(hotels)} reported={reported_count} ({coverage_pct}%)"
                 )
-                return Response(
-                    {
-                        'success': False,
-                        'count': len(hotels),
-                        'hotels': [],
-                        'cached': False,
-                        'is_real_time': False,
-                        'data_source': 'booking.com',
-                        'message': 'Scrape accuracy too low. Please retry.',
-                        'search_params': search_params,
-                        'meta': meta,
-                    },
-                    status=status.HTTP_502_BAD_GATEWAY,
-                )
+            meta['coverage_pct'] = coverage_pct
+        meta['verified'] = verified
+        meta['verification_notes'] = verification_notes
+
+        # Occupancy-based filtering
+        adults = int(search_params.get('adults', 2) or 2)
+        for h in hotels:
+            max_occ = h.get('max_occupancy', 2)
+            h['occupancy_match'] = (max_occ >= adults)
+            # Ensure rooms[] field exists on every hotel
+            if not h.get('rooms'):
+                h['rooms'] = [{
+                    'room_type': h.get('room_type', 'double'),
+                    'max_occupancy': max_occ,
+                    'price_per_night': h.get('price_per_night'),
+                    'total_price': h.get('total_stay_price'),
+                    'cancellation_policy': h.get('cancellation_policy', 'standard'),
+                    'meal_plan': h.get('meal_plan', 'room_only'),
+                    'availability': h.get('availability_status', 'Available'),
+                    'occupancy_match': max_occ >= adults,
+                }]
+
+        # Soft filter: prefer hotels that match occupancy, fall back to all if none match
+        matched = [h for h in hotels if h.get('occupancy_match', True)]
+        occupancy_note = None
+        if matched:
+            hotels = matched
+        else:
+            occupancy_note = (
+                f'No rooms found exactly matching {adults} adults — showing all available rooms. '
+                'This may happen for high adult counts (3+) where specific room types are scarce.'
+            )
+            logger.warning(occupancy_note)
+        meta['occupancy_note'] = occupancy_note
+        meta['adults_requested'] = adults
+        meta['occupancy_matched'] = len(matched)
+
+        # ── Normalize fields for frontend compatibility ──────────────────────
+        for h in hotels:
+            # price_per_night → double_bed_price_per_day (what HotelSearchResults.js reads)
+            ppn = h.get('price_per_night') or h.get('double_bed_price_per_day')
+            if not ppn and h.get('total_stay_price') and h.get('nights', 0) > 0:
+                ppn = round(h['total_stay_price'] / h['nights'])
+            h['price_per_night'] = ppn
+            h['double_bed_price_per_day'] = ppn
+
+            # Ensure rating is a float
+            raw_rating = h.get('rating') or h.get('review_rating')
+            if raw_rating:
+                try:
+                    h['rating'] = float(str(raw_rating).replace(',', '.'))
+                    h['review_rating'] = h['rating']
+                except (ValueError, TypeError):
+                    h['rating'] = None
+                    h['review_rating'] = None
+
+            # Ensure name + source always set
+            h.setdefault('source', 'booking.com')
+            h.setdefault('is_real_time', True)
+            h.setdefault('currency', 'PKR')
 
         elapsed_seconds = meta.get('elapsed_seconds')
         if isinstance(elapsed_seconds, (int, float)) and elapsed_seconds > 90:
-            logger.warning(f"Scrape exceeded 90 seconds (elapsed={elapsed_seconds}) but returning data to avoid timeouts")
+            logger.warning(f"Scrape exceeded 90 seconds (elapsed={elapsed_seconds}) but returning data")
 
         # Persist hotels in DB (single transaction, no partial saves)
         def _build_source_url(params: dict, meta_dict: dict) -> str:
@@ -280,6 +333,9 @@ def scrape_hotels(request):
                             distance_from_center=(h.get('distance_from_center') or h.get('distance') or '')[:255] or None,
                             property_type=(h.get('property_type') or '')[:80] or None,
                             room_type=(h.get('room_type') or h.get('room_info') or '')[:255] or None,
+                            max_occupancy=int(h.get('max_occupancy', 2) or 2),
+                            meal_plan=(h.get('meal_plan') or '')[:50] or None,
+                            cancellation_policy=(h.get('cancellation_policy') or '')[:50] or None,
                             price_per_night=_to_decimal(h.get('price_per_night')),
                             total_stay_price=_to_decimal(h.get('total_stay_price')),
                             review_rating=(float(h.get('review_rating')) if h.get('review_rating') is not None else None),

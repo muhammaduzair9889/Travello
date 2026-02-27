@@ -7,7 +7,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .generator import generate_itinerary, ensure_lahore_places_seeded, _normalize_interests, _budget_rank, _score_place, _pick_nearby, _pace_target
+from .generator import (
+    generate_itinerary, ensure_lahore_places_seeded,
+    _normalize_interests, _budget_rank, _score_place, _pick_nearby, _pace_target,
+    regenerate_day, regenerate_full_trip, _get_mood_tags, _build_day_items,
+)
 from .models import Itinerary, Place
 from .serializers import ItinerarySerializer, ItineraryGenerateSerializer, PlaceSerializer
 
@@ -41,6 +45,7 @@ class ItineraryGenerateView(APIView):
             budget_level=data.get('budget_level', Itinerary.Budget.MEDIUM),
             interests=data.get('interests', []),
             pace=data.get('pace', Itinerary.Pace.BALANCED),
+            mood=data.get('mood', ''),
         )
 
         return Response({'success': True, 'itinerary': ItinerarySerializer(itinerary).data}, status=status.HTTP_201_CREATED)
@@ -67,8 +72,9 @@ class ItineraryDetailView(APIView):
         budget_level = request.data.get('budget_level')
         pace = request.data.get('pace')
         interests = request.data.get('interests')
+        mood = request.data.get('mood')
         notes = request.data.get('notes')
-        regenerate = bool(request.data.get('regenerate', False))
+        should_regenerate = bool(request.data.get('regenerate', False))
 
         with transaction.atomic():
             if budget_level:
@@ -77,89 +83,32 @@ class ItineraryDetailView(APIView):
                 itinerary.pace = pace
             if interests is not None:
                 itinerary.interests = _normalize_interests(interests)
+            if mood is not None:
+                itinerary.mood = mood
             if notes is not None:
                 itinerary.notes = str(notes)
 
-            if regenerate:
-                # regenerate full itinerary using updated settings
-                regenerated = generate_itinerary(
-                    user=request.user,
-                    city=itinerary.city,
-                    start_date=itinerary.start_date,
-                    end_date=itinerary.end_date,
-                    travelers=itinerary.travelers,
-                    budget_level=itinerary.budget_level,
-                    interests=itinerary.interests,
-                    pace=itinerary.pace,
-                )
-                itinerary.days = regenerated.days
-                regenerated.delete()
+            if should_regenerate:
+                # Full trip regeneration with smart diversity
+                new_days, new_excluded = regenerate_full_trip(itinerary)
+                itinerary.days = new_days
+                itinerary.excluded_place_ids = new_excluded
 
             itinerary.save()
 
         return Response({'success': True, 'itinerary': ItinerarySerializer(itinerary).data})
 
-
-def _regenerate_day_items(*, itinerary: Itinerary, day_index: int):
-    ensure_lahore_places_seeded()
-
-    interests_tags = _normalize_interests(itinerary.interests)
-    budget_cap = _budget_rank(itinerary.budget_level)
-    per_day = _pace_target(itinerary.pace)
-
-    used_ids = set()
-    for di, day in enumerate(itinerary.days or []):
-        if di == day_index:
-            continue
-        for item in day.get('items', []):
-            if item.get('type') == 'place' and item.get('place_id'):
-                used_ids.add(item['place_id'])
-
-    candidates = list(Place.objects.filter(city=itinerary.city))
-    candidates = [p for p in candidates if _budget_rank(p.budget_level) <= budget_cap and p.id not in used_ids]
-    candidates.sort(key=lambda p: _score_place(p, interests_tags), reverse=True)
-
-    major = None
-    for p in candidates:
-        if p.estimated_visit_minutes >= 120 or p.category in ('History', 'Religious', 'Culture'):
-            major = p
-            break
-    picked = []
-    if major:
-        picked.append(major)
-        rest = [p for p in candidates if p.id != major.id]
-        picked.extend(_pick_nearby(major, rest, k=max(0, per_day - 1)))
-    while len(picked) < per_day:
-        for p in candidates:
-            if p in picked:
-                continue
-            picked.append(p)
-            break
-        else:
-            break
-
-    items = []
-    for idx, p in enumerate(picked[:per_day]):
-        slot = 'morning' if idx == 0 else ('afternoon' if idx < max(2, per_day - 1) else 'evening')
-        items.append(
-            {
-                'type': 'place',
-                'slot': slot,
-                'place_id': p.id,
-                'name': p.name,
-                'category': p.category,
-                'estimated_visit_minutes': p.estimated_visit_minutes,
-                'budget_level': p.budget_level,
-                'latitude': p.latitude,
-                'longitude': p.longitude,
-                'average_rating': p.average_rating,
-                'ideal_hours': {'start': p.ideal_start_hour, 'end': p.ideal_end_hour},
-            }
-        )
-    return items
+    def delete(self, request, itinerary_id):
+        itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
+        itinerary.delete()
+        return Response({'success': True, 'message': 'Itinerary deleted'}, status=status.HTTP_204_NO_CONTENT)
 
 
 class ItineraryRegenerateDayView(APIView):
+    """
+    POST /api/itineraries/{id}/regenerate-day/
+    Regenerate a single day with smart exclusion and mood preservation.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request, itinerary_id):
@@ -169,8 +118,41 @@ class ItineraryRegenerateDayView(APIView):
             return Response({'success': False, 'error': 'Invalid day_index'}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
-            itinerary.days[day_index]['items'] = _regenerate_day_items(itinerary=itinerary, day_index=day_index)
-            itinerary.save(update_fields=['days', 'updated_at'])
+            new_items, new_excluded = regenerate_day(itinerary, day_index)
+            itinerary.days[day_index]['items'] = new_items
+            itinerary.excluded_place_ids = new_excluded
+            itinerary.save(update_fields=['days', 'excluded_place_ids', 'updated_at'])
+
+        return Response({'success': True, 'itinerary': ItinerarySerializer(itinerary).data})
+
+
+class ItineraryRegenerateFullView(APIView):
+    """
+    POST /api/itineraries/{id}/regenerate-full/
+    Regenerate the entire trip with maximum diversity.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, itinerary_id):
+        itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
+
+        # Allow changing mood/budget/pace during regeneration
+        new_mood = request.data.get('mood')
+        new_budget = request.data.get('budget_level')
+        new_pace = request.data.get('pace')
+
+        with transaction.atomic():
+            if new_mood is not None:
+                itinerary.mood = new_mood
+            if new_budget:
+                itinerary.budget_level = new_budget
+            if new_pace:
+                itinerary.pace = new_pace
+
+            new_days, new_excluded = regenerate_full_trip(itinerary)
+            itinerary.days = new_days
+            itinerary.excluded_place_ids = new_excluded
+            itinerary.save()
 
         return Response({'success': True, 'itinerary': ItinerarySerializer(itinerary).data})
 
@@ -197,7 +179,7 @@ class ItineraryReplacePlaceView(APIView):
         if new_place_id:
             new_place = get_object_or_404(Place, id=new_place_id, city=itinerary.city)
         else:
-            # Auto-pick a replacement from same category within budget not already used
+            # Auto-pick replacement from same category within budget
             old_category = items[item_index].get('category')
             budget_cap = _budget_rank(itinerary.budget_level)
             used = set()
@@ -223,12 +205,21 @@ class ItineraryReplacePlaceView(APIView):
             'latitude': new_place.latitude,
             'longitude': new_place.longitude,
             'average_rating': new_place.average_rating,
+            'tags': new_place.tags or [],
             'ideal_hours': {'start': new_place.ideal_start_hour, 'end': new_place.ideal_end_hour},
         }
 
         with transaction.atomic():
+            # Add old place to exclusion history
+            old_pid = items[item_index].get('place_id')
+            if old_pid:
+                excluded = list(itinerary.excluded_place_ids or [])
+                if old_pid not in excluded:
+                    excluded.append(old_pid)
+                itinerary.excluded_place_ids = excluded
+
             itinerary.days[day_index]['items'][item_index] = new_item
-            itinerary.save(update_fields=['days', 'updated_at'])
+            itinerary.save(update_fields=['days', 'excluded_place_ids', 'updated_at'])
 
         return Response({'success': True, 'itinerary': ItinerarySerializer(itinerary).data})
 
@@ -253,3 +244,104 @@ class ItineraryRemovePlaceView(APIView):
 
         return Response({'success': True, 'itinerary': ItinerarySerializer(itinerary).data})
 
+
+class ItineraryLockPlaceView(APIView):
+    """
+    POST /api/itineraries/{id}/lock-place/
+    Lock a place so it survives regeneration.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, itinerary_id):
+        itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
+        place_id = request.data.get('place_id')
+        lock = request.data.get('lock', True)  # True to lock, False to unlock
+
+        if not place_id:
+            return Response({'success': False, 'error': 'place_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        locked = list(itinerary.locked_place_ids or [])
+
+        if lock and place_id not in locked:
+            locked.append(place_id)
+        elif not lock and place_id in locked:
+            locked.remove(place_id)
+
+        itinerary.locked_place_ids = locked
+        itinerary.save(update_fields=['locked_place_ids', 'updated_at'])
+
+        return Response({
+            'success': True,
+            'locked_place_ids': locked,
+            'itinerary': ItinerarySerializer(itinerary).data
+        })
+
+
+class ItineraryReorderView(APIView):
+    """
+    POST /api/itineraries/{id}/reorder/
+    Reorder places within a day via drag & drop.
+    
+    Body: { "day_index": 0, "item_order": [2, 0, 1, 3] }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, itinerary_id):
+        itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
+        day_index = int(request.data.get('day_index', -1))
+        item_order = request.data.get('item_order', [])
+
+        if day_index < 0 or day_index >= len(itinerary.days or []):
+            return Response({'success': False, 'error': 'Invalid day_index'}, status=status.HTTP_400_BAD_REQUEST)
+
+        items = itinerary.days[day_index].get('items', [])
+        if len(item_order) != len(items):
+            return Response(
+                {'success': False, 'error': f'item_order must have {len(items)} elements'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate indices
+        if sorted(item_order) != list(range(len(items))):
+            return Response({'success': False, 'error': 'Invalid item_order indices'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Reorder
+        new_items = [items[i] for i in item_order]
+
+        # Re-assign slots
+        per_day = len(new_items)
+        for idx, item in enumerate(new_items):
+            if idx == 0:
+                item['slot'] = 'morning'
+            elif idx < max(2, per_day - 1):
+                item['slot'] = 'afternoon'
+            else:
+                item['slot'] = 'evening'
+
+        with transaction.atomic():
+            itinerary.days[day_index]['items'] = new_items
+            itinerary.save(update_fields=['days', 'updated_at'])
+
+        return Response({'success': True, 'itinerary': ItinerarySerializer(itinerary).data})
+
+
+class MoodListView(APIView):
+    """
+    GET /api/itineraries/moods/
+    Returns available moods with descriptions.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        moods = [
+            {'value': 'RELAXING', 'label': 'Relaxing', 'emoji': '🧘', 'description': 'Parks, gardens, calm spots'},
+            {'value': 'SPIRITUAL', 'label': 'Spiritual', 'emoji': '🕌', 'description': 'Mosques, shrines, sacred places'},
+            {'value': 'HISTORICAL', 'label': 'Historical', 'emoji': '🏛️', 'description': 'Forts, museums, old city'},
+            {'value': 'FOODIE', 'label': 'Foodie', 'emoji': '🍛', 'description': 'Food streets, restaurants, local cuisine'},
+            {'value': 'FUN', 'label': 'Fun & Entertainment', 'emoji': '🎢', 'description': 'Malls, parks, shows'},
+            {'value': 'SHOPPING', 'label': 'Shopping', 'emoji': '🛍️', 'description': 'Bazaars, malls, markets'},
+            {'value': 'NATURE', 'label': 'Nature', 'emoji': '🌿', 'description': 'Gardens, parks, greenery'},
+            {'value': 'ROMANTIC', 'label': 'Romantic', 'emoji': '💕', 'description': 'Scenic spots, dinner venues'},
+            {'value': 'FAMILY', 'label': 'Family', 'emoji': '👨‍👩‍👧‍👦', 'description': 'Kid-friendly attractions'},
+        ]
+        return Response({'success': True, 'moods': moods})

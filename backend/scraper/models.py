@@ -58,6 +58,9 @@ class ScrapedHotelResult(models.Model):
 
     property_type = models.CharField(max_length=80, blank=True, null=True)
     room_type = models.CharField(max_length=255, blank=True, null=True)
+    max_occupancy = models.PositiveIntegerField(default=2, help_text='Maximum guest capacity for the room')
+    meal_plan = models.CharField(max_length=50, blank=True, null=True, help_text='e.g. breakfast_included, room_only')
+    cancellation_policy = models.CharField(max_length=50, blank=True, null=True, help_text='e.g. free_cancellation, non_refundable')
 
     price_per_night = models.DecimalField(
         max_digits=12,

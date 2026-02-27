@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaSearch, 
-  FaMapMarkerAlt, 
-  FaStar, 
-  FaHeart, 
-  FaRegHeart, 
-  FaWifi, 
-  FaParking, 
-  FaSwimmingPool, 
+import {
+  FaSearch,
+  FaMapMarkerAlt,
+  FaStar,
+  FaHeart,
+  FaRegHeart,
+  FaWifi,
+  FaParking,
+  FaSwimmingPool,
   FaUtensils,
   FaCoffee,
   FaBath,
@@ -34,7 +34,8 @@ import {
   FaClock,
   FaPercent,
   FaThumbsUp,
-  FaMap
+  FaMap,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -84,7 +85,7 @@ function MapController({ center, zoom }) {
 const LoadingScreen = ({ searchParams }) => {
   const [loadingStage, setLoadingStage] = useState(0);
   const [dotsCount, setDotsCount] = useState(1);
-  
+
   const loadingMessages = [
     'Connecting to Booking.com',
     'Searching available hotels',
@@ -116,11 +117,11 @@ const LoadingScreen = ({ searchParams }) => {
         {/* Animated Hotel Icon */}
         <div className="relative mb-8">
           <motion.div
-            animate={{ 
+            animate={{
               scale: [1, 1.1, 1],
               rotate: [0, 5, -5, 0]
             }}
-            transition={{ 
+            transition={{
               duration: 2,
               repeat: Infinity,
               ease: "easeInOut"
@@ -129,7 +130,7 @@ const LoadingScreen = ({ searchParams }) => {
           >
             <FaSearch className="text-white text-5xl" />
           </motion.div>
-          
+
           {/* Orbiting dots */}
           {[0, 1, 2].map((i) => (
             <motion.div
@@ -179,20 +180,19 @@ const LoadingScreen = ({ searchParams }) => {
             <motion.div
               key={message}
               initial={{ opacity: 0, x: -20 }}
-              animate={{ 
+              animate={{
                 opacity: index <= loadingStage ? 1 : 0.3,
                 x: 0
               }}
               transition={{ delay: index * 0.3 }}
               className="flex items-center gap-3"
             >
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                index < loadingStage 
-                  ? 'bg-green-500' 
-                  : index === loadingStage 
-                    ? 'bg-blue-500 animate-pulse' 
-                    : 'bg-gray-300 dark:bg-gray-600'
-              }`}>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${index < loadingStage
+                ? 'bg-green-500'
+                : index === loadingStage
+                  ? 'bg-blue-500 animate-pulse'
+                  : 'bg-gray-300 dark:bg-gray-600'
+                }`}>
                 {index < loadingStage ? (
                   <FaCheck className="text-white text-xs" />
                 ) : index === loadingStage ? (
@@ -201,11 +201,10 @@ const LoadingScreen = ({ searchParams }) => {
                   <div className="w-2 h-2 bg-gray-400 rounded-full" />
                 )}
               </div>
-              <span className={`text-sm ${
-                index <= loadingStage 
-                  ? 'text-gray-800 dark:text-white font-medium' 
-                  : 'text-gray-400 dark:text-gray-500'
-              }`}>
+              <span className={`text-sm ${index <= loadingStage
+                ? 'text-gray-800 dark:text-white font-medium'
+                : 'text-gray-400 dark:text-gray-500'
+                }`}>
                 {message}
                 {index === loadingStage && '.'.repeat(dotsCount)}
               </span>
@@ -222,7 +221,7 @@ const LoadingScreen = ({ searchParams }) => {
             transition={{ duration: 0.5 }}
           />
         </div>
-        
+
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
           Finding the best deals from 1000+ properties
         </p>
@@ -232,10 +231,10 @@ const LoadingScreen = ({ searchParams }) => {
 };
 
 // Filter Sidebar Component
-const FilterSidebar = ({ 
-  filters, 
-  setFilters, 
-  priceRange, 
+const FilterSidebar = ({
+  filters,
+  setFilters,
+  priceRange,
   setPriceRange,
   maxPrice,
   minPrice,
@@ -389,9 +388,9 @@ const FilterSidebar = ({
                   type="radio"
                   name="rating"
                   checked={filters.rating === rating.value}
-                  onChange={() => setFilters(prev => ({ 
-                    ...prev, 
-                    rating: prev.rating === rating.value ? null : rating.value 
+                  onChange={() => setFilters(prev => ({
+                    ...prev,
+                    rating: prev.rating === rating.value ? null : rating.value
                   }))}
                   className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                 />
@@ -417,11 +416,10 @@ const FilterSidebar = ({
                   stars: prev.stars === star ? null : star
                 }));
               }}
-              className={`flex items-center gap-1 px-3 py-2 rounded-lg border transition-all ${
-                filters.stars === star
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400'
-              }`}
+              className={`flex items-center gap-1 px-3 py-2 rounded-lg border transition-all ${filters.stars === star
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400'
+                }`}
             >
               {star}
               <FaStar className={filters.stars === star ? 'text-yellow-300' : 'text-yellow-500'} />
@@ -434,7 +432,7 @@ const FilterSidebar = ({
       <FilterSection title="Property type" section="propertyType">
         <div className="space-y-2 max-h-48 overflow-y-auto">
           {propertyTypes.map(type => {
-            const count = hotels.filter(h => 
+            const count = hotels.filter(h =>
               h.property_type?.toLowerCase().includes(type.id) ||
               h.name?.toLowerCase().includes(type.id)
             ).length;
@@ -562,9 +560,8 @@ const HotelCard = ({ hotel, searchParams, isFavorite, onToggleFavorite, onBook, 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0, scale: isActive ? 1.02 : 1 }}
       transition={{ duration: 0.3 }}
-      className={`bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden border ${
-        isActive ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200 dark:border-gray-700'
-      }`}
+      className={`bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden border ${isActive ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200 dark:border-gray-700'
+        }`}
     >
       <div className="flex flex-col md:flex-row">
         {/* Hotel Image */}
@@ -577,7 +574,7 @@ const HotelCard = ({ hotel, searchParams, isFavorite, onToggleFavorite, onBook, 
               e.target.src = 'https://via.placeholder.com/400x300?text=Hotel+Image';
             }}
           />
-          
+
           {/* Favorite Button */}
           <button
             onClick={() => onToggleFavorite(hotel.id)}
@@ -678,9 +675,8 @@ const HotelCard = ({ hotel, searchParams, isFavorite, onToggleFavorite, onBook, 
 
           {/* Room Info & Availability */}
           {hotel.availability_status && (
-            <p className={`text-sm mb-2 ${
-              hotel.is_limited ? 'text-red-600 dark:text-red-400 font-medium' : 'text-green-600 dark:text-green-400'
-            }`}>
+            <p className={`text-sm mb-2 ${hotel.is_limited ? 'text-red-600 dark:text-red-400 font-medium' : 'text-green-600 dark:text-green-400'
+              }`}>
               <FaClock className="inline mr-1" />
               {hotel.availability_status}
             </p>
@@ -699,7 +695,7 @@ const HotelCard = ({ hotel, searchParams, isFavorite, onToggleFavorite, onBook, 
                 +taxes & fees • Total: {formatPrice(totalPrice)}
               </p>
             </div>
-            
+
             <button
               onClick={() => onBook(hotel)}
               className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg"
@@ -718,10 +714,10 @@ const HotelSearchResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const initialSearchParams = location.state || {};
-  
+
   // Search params state (mutable)
   const [searchParams, setSearchParams] = useState(initialSearchParams);
-  
+
   // Modify Search Modal
   const [showModifySearch, setShowModifySearch] = useState(false);
   const [modifyDestination, setModifyDestination] = useState(initialSearchParams.destination || '');
@@ -736,10 +732,11 @@ const HotelSearchResults = () => {
   const [filteredHotels, setFilteredHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+  const [scraperMeta, setScraperMeta] = useState(null);
+
   // Sorting
   const [sortBy, setSortBy] = useState('best_match');
-  
+
   // Filters
   const [filters, setFilters] = useState({
     rating: null,
@@ -748,23 +745,23 @@ const HotelSearchResults = () => {
     amenities: {},
     meals: {}
   });
-  
+
   // Price Range
   const [priceRange, setPriceRange] = useState({ min: 0, max: 200000 });
   const [actualPriceRange, setActualPriceRange] = useState({ min: 0, max: 200000 });
-  
+
   // Map
   const [showMap, setShowMap] = useState(false);
   const [mapCenter] = useState([31.5204, 74.3587]);
   const [activeHotel, setActiveHotel] = useState(null);
-  
+
   // Favorites
   const [favorites, setFavorites] = useState(new Set());
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const hotelsPerPage = 15;
-  
+
   // Mobile filter
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
@@ -793,7 +790,7 @@ const HotelSearchResults = () => {
     setShowModifySearch(false);
     setLoading(true);
     setCurrentPage(1);
-    
+
     // Fetch hotels with new params
     fetchHotelsWithParams(newSearchParams);
   };
@@ -897,7 +894,7 @@ const HotelSearchResults = () => {
             rating: ratingValue,
             stars: stars,
             property_type: hotel.property_type || 'Hotel',
-            availability_status: hotel.availability || 'Available',
+            availability_status: hotel.availability_status || hotel.availability || 'Available',
             rooms_left: hotel.rooms_left,
             is_limited: hotel.is_limited || false,
             has_deal: hotel.has_deal,
@@ -914,11 +911,28 @@ const HotelSearchResults = () => {
             quad_bed_price_per_day: Math.round(pricePerNight * 1.5),
             family_room_price_per_day: Math.round(pricePerNight * 1.8),
             is_scraped: true,
+            // New fields from upgraded scraper
+            max_occupancy: hotel.max_occupancy || 2,
+            occupancy_match: hotel.occupancy_match !== false,
+            room_type: hotel.room_type || 'double',
+            meal_plan: hotel.meal_plan || 'room_only',
+            cancellation_policy: hotel.cancellation_policy || 'standard',
             latitude: hotel.latitude || 31.5204 + (Math.random() - 0.5) * 0.1,
             longitude: hotel.longitude || 74.3587 + (Math.random() - 0.5) * 0.1
           });
           return acc;
         }, []);
+
+        // Store scraper metadata for verification display
+        const meta = data.meta || {};
+        setScraperMeta({
+          verified: meta.verified !== false,
+          coverage_pct: meta.coverage_pct || null,
+          reported_count: meta.reported_count || null,
+          scraped_count: meta.scraped_count || transformedHotels.length,
+          verification_notes: meta.verification_notes || [],
+          elapsed_seconds: meta.elapsed_seconds || null,
+        });
 
         setHotels(transformedHotels);
         setFilteredHotels(transformedHotels);
@@ -973,7 +987,7 @@ const HotelSearchResults = () => {
     if (Object.values(filters.amenities || {}).some(v => v)) {
       result = result.filter(hotel => {
         const amenitiesStr = (hotel.amenities || []).join(' ').toLowerCase() + ' ' + (hotel.description || '').toLowerCase();
-        
+
         if (filters.amenities.wifi && !hotel.wifi_available && !amenitiesStr.includes('wifi')) return false;
         if (filters.amenities.parking && !hotel.parking_available && !amenitiesStr.includes('parking')) return false;
         if (filters.amenities.pool && !amenitiesStr.includes('pool')) return false;
@@ -987,7 +1001,7 @@ const HotelSearchResults = () => {
         if (filters.amenities.tv && !amenitiesStr.includes('tv') && !amenitiesStr.includes('television')) return false;
         if (filters.amenities.coffeeMaker && !amenitiesStr.includes('coffee') && !amenitiesStr.includes('tea')) return false;
         if (filters.amenities.bathtub && !amenitiesStr.includes('bathtub') && !amenitiesStr.includes('bath')) return false;
-        
+
         return true;
       });
     }
@@ -996,12 +1010,12 @@ const HotelSearchResults = () => {
     if (Object.values(filters.meals || {}).some(v => v)) {
       result = result.filter(hotel => {
         const desc = (hotel.description || '').toLowerCase() + (hotel.amenities || []).join(' ').toLowerCase();
-        
+
         if (filters.meals.breakfast && !desc.includes('breakfast')) return false;
         if (filters.meals.halfBoard && !desc.includes('half board')) return false;
         if (filters.meals.fullBoard && !desc.includes('full board')) return false;
         if (filters.meals.allInclusive && !desc.includes('all inclusive')) return false;
-        
+
         return true;
       });
     }
@@ -1324,6 +1338,18 @@ const HotelSearchResults = () => {
           </div>
         </div>
 
+        {/* Verification Banner */}
+        {scraperMeta && !scraperMeta.verified && (
+          <div className="bg-yellow-500 dark:bg-yellow-600 py-2 px-4">
+            <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 text-sm">
+              <FaExclamationTriangle />
+              <span className="font-medium">
+                Partial results: showing {scraperMeta.scraped_count} of ~{scraperMeta.reported_count} properties ({scraperMeta.coverage_pct}% coverage)
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Urgency Banner */}
         <div className="bg-orange-500 dark:bg-orange-600 py-2 px-4">
           <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 text-sm">
@@ -1345,7 +1371,7 @@ const HotelSearchResults = () => {
             <span className="text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap flex items-center gap-2">
               <FaSort /> Sort by:
             </span>
-            
+
             {[
               { id: 'best_match', label: 'Best match', icon: <FaThumbsUp /> },
               { id: 'top_reviewed', label: 'Top reviewed', icon: <FaStar className="text-yellow-500" /> },
@@ -1356,17 +1382,16 @@ const HotelSearchResults = () => {
               <button
                 key={option.id}
                 onClick={() => setSortBy(option.id)}
-                className={`px-4 py-2 rounded-full whitespace-nowrap transition-all flex items-center gap-2 ${
-                  sortBy === option.id
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
+                className={`px-4 py-2 rounded-full whitespace-nowrap transition-all flex items-center gap-2 ${sortBy === option.id
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
               >
                 {option.icon}
                 {option.label}
               </button>
             ))}
-            
+
             <div className="ml-auto flex items-center gap-2">
               {/* Mobile Filter Toggle */}
               <button
@@ -1375,7 +1400,7 @@ const HotelSearchResults = () => {
               >
                 <FaFilter /> Filters
               </button>
-              
+
               {/* Map Toggle */}
               <button
                 onClick={() => setShowMap(!showMap)}
@@ -1515,7 +1540,7 @@ const HotelSearchResults = () => {
                     >
                       Previous
                     </button>
-                    
+
                     {[...Array(Math.min(5, totalPages))].map((_, i) => {
                       let pageNum;
                       if (totalPages <= 5) {
@@ -1527,7 +1552,7 @@ const HotelSearchResults = () => {
                       } else {
                         pageNum = currentPage - 2 + i;
                       }
-                      
+
                       return (
                         <button
                           key={pageNum}
@@ -1535,17 +1560,16 @@ const HotelSearchResults = () => {
                             setCurrentPage(pageNum);
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                           }}
-                          className={`w-10 h-10 rounded-lg ${
-                            currentPage === pageNum
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                          }`}
+                          className={`w-10 h-10 rounded-lg ${currentPage === pageNum
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                            }`}
                         >
                           {pageNum}
                         </button>
                       );
                     })}
-                    
+
                     <button
                       onClick={() => {
                         setCurrentPage(prev => Math.min(prev + 1, totalPages));
@@ -1572,7 +1596,7 @@ const HotelSearchResults = () => {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   />
                   <MapController center={mapCenter} zoom={12} />
-                  
+
                   {filteredHotels.map(hotel => (
                     hotel.latitude && hotel.longitude && (
                       <Marker
@@ -1588,9 +1612,9 @@ const HotelSearchResults = () => {
                       >
                         <Popup>
                           <div className="p-2 min-w-[200px]">
-                            <img 
-                              src={hotel.image} 
-                              alt={hotel.name} 
+                            <img
+                              src={hotel.image}
+                              alt={hotel.name}
                               className="w-full h-24 object-cover rounded-lg mb-2"
                             />
                             <h3 className="font-bold text-gray-800">{hotel.name}</h3>

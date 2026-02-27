@@ -36,6 +36,7 @@ const AdminHotels = lazy(() => import('./components/AdminHotels'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const AdminBookings = lazy(() => import('./components/AdminBookings'));
 const TravelJournal = lazy(() => import('./components/TravelJournal'));
+const ItineraryPlanner = lazy(() => import('./components/ItineraryPlanner'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -108,6 +109,7 @@ function App() {
                   <Route path="/admin/bookings" element={<AdminBookings />} />
                   <Route path="/admin-dashboard" element={<AdminDashboard />} />
                   <Route path="/journal" element={<TravelJournal />} />
+                  <Route path="/itinerary" element={<ItineraryPlanner />} />
                 </Routes>
               </Suspense>
             </div>
