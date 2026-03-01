@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from pathlib import Path
 import os
 import sys
+import logging
 from decouple import config
 
 # PyMySQL — only needed when a MySQL DATABASE_URL is configured
@@ -335,3 +336,73 @@ OTP_MAX_ATTEMPTS = config('OTP_MAX_ATTEMPTS', default=5, cast=int)
 
 # Email validation
 VALIDATE_EMAIL_ON_SIGNUP = config('VALIDATE_EMAIL_ON_SIGNUP', default=True, cast=bool)
+
+# ============================================
+# SCRAPER CONFIGURATION
+# ============================================
+SCRAPER_MAX_RESULTS = config('SCRAPER_MAX_RESULTS', default=600, cast=int)         # Target hotel count (v3: multi-filter 300-400+)
+SCRAPER_CACHE_TTL_MINS = config('SCRAPER_CACHE_TTL_MINS', default=15, cast=int)    # Cache lifetime
+SCRAPER_CONCURRENCY_LIMIT = config('SCRAPER_CONCURRENCY_LIMIT', default=4, cast=int)  # Max parallel scrapes
+SCRAPER_MAX_SECONDS = config('SCRAPER_MAX_SECONDS', default=140, cast=int)         # Per-run time limit (v3: ~50 filter×sort combos)
+SCRAPER_HARD_TIMEOUT = config('SCRAPER_HARD_TIMEOUT', default=200, cast=int)       # Subprocess hard timeout (v3: generous margin)
+
+# ============================================
+# FEATURE FLAGS
+# ============================================
+ENABLE_ML_RECOMMENDATIONS = config('ENABLE_ML_RECOMMENDATIONS', default=True, cast=bool)
+
+# ============================================
+# SENTRY / MONITORING
+# ============================================
+SENTRY_DSN = config('SENTRY_DSN', default='')
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+        from sentry_sdk.integrations.logging import LoggingIntegration
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[
+                DjangoIntegration(transaction_style='url'),
+                LoggingIntegration(level=logging.INFO, event_level=logging.ERROR),
+            ],
+            traces_sample_rate=0.2 if not DEBUG else 1.0,
+            send_default_pii=False,
+            environment='development' if DEBUG else 'production',
+        )
+        logger_sentry = logging.getLogger('sentry')
+        logger_sentry.info('Sentry SDK initialized')
+    except ImportError:
+        import warnings
+        warnings.warn('SENTRY_DSN is set but sentry-sdk is not installed. pip install sentry-sdk')
+
+# ============================================
+# LOGGING CONFIGURATION
+# ============================================
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} {levelname} [{name}] {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'scraper': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'hotels': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'ml_system': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'authentication': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}

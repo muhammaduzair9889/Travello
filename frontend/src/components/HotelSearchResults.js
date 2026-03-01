@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -90,15 +90,15 @@ const LoadingScreen = ({ searchParams }) => {
     'Connecting to Booking.com',
     'Searching available hotels',
     'Fetching real-time prices',
-    'Checking room availability',
-    'Loading hotel images',
-    'Almost ready'
+    'Comparing room options',
+    'Verifying availability',
+    'Almost ready — finalizing results'
   ];
 
   useEffect(() => {
     const stageInterval = setInterval(() => {
       setLoadingStage(prev => (prev < loadingMessages.length - 1 ? prev + 1 : prev));
-    }, 2500);
+    }, 15000); // 15s per stage = ~90s total to cycle through
 
     const dotsInterval = setInterval(() => {
       setDotsCount(prev => (prev < 3 ? prev + 1 : 1));
@@ -522,7 +522,7 @@ const FilterSidebar = ({
   );
 };
 
-// Hotel Card Component
+// Hotel Card Component — Booking.com Production Style
 const HotelCard = ({ hotel, searchParams, isFavorite, onToggleFavorite, onBook, isActive }) => {
   const getPrice = () => {
     return hotel.double_bed_price_per_day || hotel.single_bed_price_per_day || hotel.price || 0;
@@ -587,16 +587,26 @@ const HotelCard = ({ hotel, searchParams, isFavorite, onToggleFavorite, onBook, 
             )}
           </button>
 
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-2">
+          {/* Badges Stack */}
+          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+            {hotel.is_genius && (
+              <span className="bg-blue-700 text-white text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                <FaThumbsUp className="text-[10px]" /> Genius
+              </span>
+            )}
+            {hotel.sustainability_badge && (
+              <span className="bg-emerald-600 text-white text-xs font-bold px-2 py-0.5 rounded">
+                🌱 Sustainable
+              </span>
+            )}
             {hotel.has_deal && (
-              <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                <FaPercent className="text-xs" /> Deal
+              <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
+                <FaPercent className="text-[10px]" /> {hotel.deal_label || 'Deal'}
               </span>
             )}
             {hotel.is_limited && (
-              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                <FaFire className="text-xs" /> {hotel.rooms_left || 'Few'} left!
+              <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
+                <FaFire className="text-[10px]" /> {hotel.rooms_left ? `Only ${hotel.rooms_left} left!` : 'Few left!'}
               </span>
             )}
           </div>
@@ -673,6 +683,49 @@ const HotelCard = ({ hotel, searchParams, isFavorite, onToggleFavorite, onBook, 
             ))}
           </div>
 
+          {/* Room Type Badge — real Booking.com room type */}
+          <div className="flex items-center flex-wrap gap-1.5 my-2">
+            {/* Room type badge — color varies by type */}
+            {(() => {
+              const colors = {
+                'Double Room': 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-700',
+                'Triple Room': 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-700',
+                'Quad Room': 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700',
+                'Quint Room': 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-700',
+                'Family Room': 'bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-900/40 dark:text-pink-300 dark:border-pink-700',
+                'Suite': 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-300 dark:border-yellow-700',
+                'Deluxe Room': 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700',
+                'Single Room': 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600',
+                'Dormitory': 'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/40 dark:text-teal-300 dark:border-teal-700',
+                'Entire Property': 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700',
+              };
+              // Show ALL room types from the rooms array
+              const roomTypes = hotel.rooms?.length > 0
+                ? [...new Set(hotel.rooms.map(r => r.room_type).filter(Boolean))]
+                : [(hotel.room_type || 'Standard Room')];
+
+              return roomTypes.map((rt, idx) => {
+                const c = colors[rt] || 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700';
+                return (
+                  <span key={idx} className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border ${c}`}>
+                    <FaBed className="shrink-0" />
+                    {rt}
+                  </span>
+                );
+              });
+            })()}
+            {hotel.meal_plan && (
+              <span className="inline-flex items-center text-xs font-medium bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full border border-green-200 dark:border-green-700">
+                {hotel.meal_plan}
+              </span>
+            )}
+            {hotel.cancellation_policy === 'Free Cancellation' && (
+              <span className="inline-flex items-center text-xs font-medium bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-700">
+                Free Cancel
+              </span>
+            )}
+          </div>
+
           {/* Room Info & Availability */}
           {hotel.availability_status && (
             <p className={`text-sm mb-2 ${hotel.is_limited ? 'text-red-600 dark:text-red-400 font-medium' : 'text-green-600 dark:text-green-400'
@@ -688,20 +741,43 @@ const HotelCard = ({ hotel, searchParams, isFavorite, onToggleFavorite, onBook, 
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {nights} night{nights > 1 ? 's' : ''}, {searchParams?.adults || 2} adult{(searchParams?.adults || 2) > 1 ? 's' : ''}
               </p>
+              {/* Show crossed-out original price if deal exists */}
+              {hotel.original_price && hotel.price_per_night && hotel.original_price > hotel.price_per_night && (
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-gray-400 line-through">
+                    PKR {formatPrice(Math.round(hotel.original_price / (hotel.nights || 1)))}
+                  </p>
+                  <span className="text-xs font-bold text-green-600 bg-green-50 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded">
+                    -{Math.round((1 - hotel.price_per_night / hotel.original_price) * 100)}%
+                  </span>
+                </div>
+              )}
               <p className="text-3xl font-bold text-gray-800 dark:text-white">
-                {formatPrice(pricePerNight)}
+                {pricePerNight ? `PKR ${formatPrice(pricePerNight)}` : <span className="text-lg text-gray-400">Price on request</span>}
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                +taxes & fees • Total: {formatPrice(totalPrice)}
+                {pricePerNight
+                  ? <>
+                      {hotel.taxes_text
+                        ? <span className="text-xs">{hotel.taxes_text}</span>
+                        : <span>+taxes & fees</span>}
+                      <span className="ml-1">• Total: PKR {formatPrice(totalPrice)}</span>
+                    </>
+                  : 'See availability for prices'}
               </p>
             </div>
 
-            <button
-              onClick={() => onBook(hotel)}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg"
-            >
-              See availability
-            </button>
+            <div className="flex flex-col items-end gap-2">
+              <button
+                onClick={() => onBook(hotel)}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
+              >
+                See availability
+              </button>
+              {hotel.cancellation_policy === 'Free Cancellation' && (
+                <span className="text-xs text-green-600 dark:text-green-400 font-medium">Free cancellation</span>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -829,7 +905,62 @@ const HotelSearchResults = () => {
         })
       });
 
+      // Auto-retry once on 503 (scraper at capacity) after a short delay
+      if (response.status === 503 && !params._retried503) {
+        console.warn('Scraper at capacity, retrying in 4 seconds...');
+        await new Promise(r => setTimeout(r, 4000));
+        return fetchHotelsWithParams({ ...params, _retried503: true });
+      }
+
       const data = await response.json();
+
+      // If backend returned a job_id but no cached hotels, poll for results
+      if (data.success && data.job_id && (!data.hotels || data.hotels.length === 0)) {
+        console.log(`No cache. Polling job ${data.job_id}...`);
+        const POLL_INTERVAL = 3000;
+        const MAX_POLLS = 50; // ~150s of polling (scraper takes 60-90s)
+        let pollHotels = [];
+        let pollMeta = {};
+        let jobFailed = false;
+        let failError = '';
+
+        for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
+          await new Promise(r => setTimeout(r, POLL_INTERVAL));
+          try {
+            const statusRes = await fetch(`http://localhost:8000/api/scraper/job-status/${data.job_id}/`);
+            const statusData = await statusRes.json();
+            console.log(`[poll ${attempt + 1}] status=${statusData.status} hotels=${statusData.hotel_count}`);
+
+            if (statusData.status === 'COMPLETED' || statusData.status === 'PARTIAL') {
+              const resultsRes = await fetch(`http://localhost:8000/api/scraper/results/${data.job_id}/`);
+              const resultsData = await resultsRes.json();
+              pollHotels = resultsData.hotels || [];
+              pollMeta = resultsData.meta || {};
+              break;
+            }
+            if (statusData.status === 'FAILED') {
+              jobFailed = true;
+              failError = statusData.error || 'Scraper job failed';
+              break;
+            }
+          } catch (pollErr) {
+            console.warn(`Poll attempt ${attempt + 1} error:`, pollErr.message);
+            // Network hiccup — keep polling
+          }
+        }
+
+        if (jobFailed) {
+          throw new Error(`Hotel search failed: ${failError}. Please try again.`);
+        }
+        if (pollHotels.length === 0) {
+          throw new Error('Hotel search is taking longer than expected. Please try again.');
+        }
+
+        // Treat polled results like a successful cached response
+        data.hotels = pollHotels;
+        data.meta = pollMeta;
+        data.success = true;
+      }
 
       if (data.success && data.hotels?.length > 0) {
         const seenKeys = new Set();
@@ -846,79 +977,112 @@ const HotelSearchResults = () => {
           }
           seenKeys.add(key);
 
-          let pricePerNight = 5000;
-          if (hotel.price) {
-            const priceMatch = hotel.price.match(/[\d,]+/);
-            if (priceMatch) {
-              pricePerNight = parseFloat(priceMatch[0].replace(/,/g, '')) || 5000;
-            }
+          // ── Price: prefer direct numeric fields ────────────────────────
+          let pricePerNight =
+            hotel.price_per_night ||
+            hotel.double_bed_price_per_day ||
+            null;
+
+          if (!pricePerNight && hotel.price) {
+            const priceMatch = hotel.price.replace(/,/g, '').match(/\d+(\.\d+)?/);
+            if (priceMatch) pricePerNight = parseFloat(priceMatch[0]) || null;
           }
 
-          let ratingValue = 0;
-          if (hotel.rating) {
-            const ratingMatch = hotel.rating.toString().match(/[\d.]+/);
-            if (ratingMatch) {
-              ratingValue = parseFloat(ratingMatch[0]) || 0;
-            }
+          if (!pricePerNight && hotel.total_stay_price && hotel.nights > 0) {
+            pricePerNight = Math.round(hotel.total_stay_price / hotel.nights);
           }
 
-          // Determine star rating from hotel name or property type
-          let stars = 3;
-          const nameLower = (hotel.name || '').toLowerCase();
-          if (nameLower.includes('5 star') || nameLower.includes('luxury') || nameLower.includes('pearl continental') || nameLower.includes('marriott')) stars = 5;
-          else if (nameLower.includes('4 star') || nameLower.includes('premier')) stars = 4;
-          else if (nameLower.includes('3 star') || nameLower.includes('comfort')) stars = 3;
-          else if (nameLower.includes('2 star') || nameLower.includes('budget')) stars = 2;
-          else if (nameLower.includes('hostel') || nameLower.includes('guest house')) stars = 1;
+          pricePerNight = pricePerNight || null; // null = show "Price on request"
 
-          // Parse review count to a number to avoid "836 reviews reviews" duplication
-          let reviewNum = null;
-          if (hotel.review_count) {
-            const revMatch = hotel.review_count.toString().replace(/,/g, '').match(/\d+/);
-            if (revMatch) reviewNum = parseInt(revMatch[0]);
+          // ── Rating ────────────────────────────────────────────────────────
+          const ratingValue = typeof hotel.rating === 'number'
+            ? hotel.rating
+            : parseFloat((hotel.rating || '0').toString()) || 0;
+
+          // ── Star rating ───────────────────────────────────────────────────
+          let stars = hotel.stars || null;
+          if (!stars) {
+            const nameLower = (hotel.name || '').toLowerCase();
+            if (nameLower.includes('pearl continental') || nameLower.includes('marriott') || nameLower.includes('luxury')) stars = 5;
+            else if (nameLower.includes('premier') || nameLower.includes('4 star')) stars = 4;
+            else if (nameLower.includes('comfort') || nameLower.includes('3 star')) stars = 3;
+            else if (nameLower.includes('budget') || nameLower.includes('2 star')) stars = 2;
+            else if (nameLower.includes('hostel') || nameLower.includes('guest house')) stars = 1;
           }
 
-          // Separate location from distance to avoid showing same text twice
-          const hotelAddress = hotel.location || hotel.distance || '';
-          const distanceText = hotel.distance && hotel.location && hotel.distance !== hotel.location
-            ? hotel.distance
-            : '';
+          // ── Review count ──────────────────────────────────────────────────
+          let reviewNum = hotel.review_count || null;
+          if (reviewNum && typeof reviewNum !== 'number') {
+            const revMatch = reviewNum.toString().replace(/,/g, '').match(/\d+/);
+            reviewNum = revMatch ? parseInt(revMatch[0]) : null;
+          }
+
+          // ── Address / distance ────────────────────────────────────────────
+          const hotelAddress = hotel.location || hotel.address || 'Lahore, Pakistan';
+          const distanceText = hotel.distance_from_center || '';
+
+          // ── Real room type from Booking.com ───────────────────────────────
+          const roomType = hotel.room_type || 'Standard Room';
+          const maxOccupancy = hotel.max_occupancy || 2;
 
           acc.push({
             id: `scraped-${acc.length}`,
             name: hotel.name || 'Hotel',
+            url: hotel.url || null,
             city: params.destination || 'Lahore',
             address: hotelAddress,
             location: hotelAddress,
-            description: hotel.amenities?.join(', ') || 'No amenities listed',
+            description: hotel.amenities?.join(', ') || hotel.room_info || 'Hotel in Lahore',
             rating: ratingValue,
             stars: stars,
             property_type: hotel.property_type || 'Hotel',
-            availability_status: hotel.availability_status || hotel.availability || 'Available',
-            rooms_left: hotel.rooms_left,
+            availability_status: hotel.availability_status || 'Available',
+            rooms_left: hotel.rooms_left || null,
             is_limited: hotel.is_limited || false,
-            has_deal: hotel.has_deal,
+            has_deal: hotel.has_deal || false,
+            deal_label: hotel.deal_label || null,
             available_rooms: hotel.rooms_left || 10,
-            image: hotel.image_url || 'https://via.placeholder.com/400x300?text=Hotel',
+            image: hotel.image_url || hotel.image || `https://via.placeholder.com/400x300?text=${encodeURIComponent(hotel.name?.slice(0, 20) || 'Hotel')}`,
             review_count: reviewNum,
+            rating_label: hotel.rating_label || null,
             distance_from_center: distanceText,
-            wifi_available: hotel.amenities?.some(a => a.toLowerCase().includes('wifi')) || false,
-            parking_available: hotel.amenities?.some(a => a.toLowerCase().includes('parking')) || false,
+            wifi_available: hotel.wifi_available || (hotel.amenities?.some(a => a.toLowerCase().includes('wifi')) ?? false),
+            parking_available: hotel.parking_available || (hotel.amenities?.some(a => a.toLowerCase().includes('parking')) ?? false),
+            pool_available: hotel.pool_available || false,
+            breakfast_available: hotel.breakfast_available || false,
             amenities: hotel.amenities || [],
-            single_bed_price_per_day: Math.round(pricePerNight * 0.8),
-            double_bed_price_per_day: pricePerNight,
-            triple_bed_price_per_day: Math.round(pricePerNight * 1.3),
-            quad_bed_price_per_day: Math.round(pricePerNight * 1.5),
-            family_room_price_per_day: Math.round(pricePerNight * 1.8),
+
+            // ── Pricing (real Booking.com price) ─────────────────────────────
+            price_per_night: pricePerNight,
+            double_bed_price_per_day: pricePerNight,   // alias used by price filter
+            total_stay_price: hotel.total_stay_price || null,
+            original_price: hotel.original_price || null,  // for showing crossed-out price
+            taxes_text: hotel.taxes_text || null,
+            nights: hotel.nights || 1,
             is_scraped: true,
-            // New fields from upgraded scraper
-            max_occupancy: hotel.max_occupancy || 2,
+
+            // ── Real room info from Booking.com ───────────────────────────────
+            room_type: roomType,
+            room_info: hotel.room_info || roomType,
+            max_occupancy: maxOccupancy,
             occupancy_match: hotel.occupancy_match !== false,
-            room_type: hotel.room_type || 'double',
-            meal_plan: hotel.meal_plan || 'room_only',
-            cancellation_policy: hotel.cancellation_policy || 'standard',
+            meal_plan: hotel.meal_plan || null,
+            cancellation_policy: hotel.cancellation_policy || null,
+
+            // ── Rooms array with real data ────────────────────────────────────
+            rooms: hotel.rooms?.length ? hotel.rooms : [{
+              room_type: roomType,
+              max_occupancy: maxOccupancy,
+              price_per_night: pricePerNight,
+              total_price: hotel.total_stay_price || null,
+              cancellation_policy: hotel.cancellation_policy || null,
+              meal_plan: hotel.meal_plan || null,
+              availability: hotel.availability_status || 'Available',
+              occupancy_match: hotel.occupancy_match !== false,
+            }],
+
             latitude: hotel.latitude || 31.5204 + (Math.random() - 0.5) * 0.1,
-            longitude: hotel.longitude || 74.3587 + (Math.random() - 0.5) * 0.1
+            longitude: hotel.longitude || 74.3587 + (Math.random() - 0.5) * 0.1,
           });
           return acc;
         }, []);
@@ -1238,11 +1402,17 @@ const HotelSearchResults = () => {
                       onChange={(e) => setModifyRoomType(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     >
-                      <option value="single">Single</option>
-                      <option value="double">Double</option>
-                      <option value="triple">Triple</option>
-                      <option value="quad">Quad</option>
-                      <option value="family">Family</option>
+                      <option value="all">All Room Types</option>
+                      <option value="single">Single Room</option>
+                      <option value="double">Double Room</option>
+                      <option value="triple">Triple Room</option>
+                      <option value="quad">Quad Room</option>
+                      <option value="quint">Quint Room</option>
+                      <option value="family">Family Room</option>
+                      <option value="suite">Suite</option>
+                      <option value="deluxe">Deluxe Room</option>
+                      <option value="dormitory">Dormitory</option>
+                      <option value="entire">Entire Property</option>
                     </select>
                   </div>
                 </div>
@@ -1338,13 +1508,13 @@ const HotelSearchResults = () => {
           </div>
         </div>
 
-        {/* Verification Banner */}
-        {scraperMeta && !scraperMeta.verified && (
-          <div className="bg-yellow-500 dark:bg-yellow-600 py-2 px-4">
+        {/* Results Info Banner */}
+        {scraperMeta && scraperMeta.reported_count && scraperMeta.scraped_count < scraperMeta.reported_count && (
+          <div className="bg-blue-500 dark:bg-blue-600 py-2 px-4">
             <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 text-sm">
               <FaExclamationTriangle />
               <span className="font-medium">
-                Partial results: showing {scraperMeta.scraped_count} of ~{scraperMeta.reported_count} properties ({scraperMeta.coverage_pct}% coverage)
+                Showing {scraperMeta.scraped_count} of {scraperMeta.reported_count} properties — real-time prices from Booking.com
               </span>
             </div>
           </div>

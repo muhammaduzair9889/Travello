@@ -60,9 +60,12 @@ class RoomType(models.Model):
         ('double', 'Double'),
         ('triple', 'Triple'),
         ('quad', 'Quad'),
+        ('quint', 'Quint'),
         ('family', 'Family'),
         ('suite', 'Suite'),
         ('deluxe', 'Deluxe'),
+        ('dormitory', 'Dormitory'),
+        ('entire', 'Entire Property'),
     ]
     
     hotel = models.ForeignKey(

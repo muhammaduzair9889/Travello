@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hotelAPI, bookingAPI } from '../services/api';
 import RecommendationWidget from './RecommendationWidget';
+import NotificationCenter from './NotificationCenter';
 import { 
   FaHotel, 
   FaPlane, 
@@ -993,15 +994,8 @@ const TopNav = () => {
         </div>
         
         <div className="flex items-center gap-3">
-          {/* Notification Button */}
-          <motion.button 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="relative p-2.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-800 rounded-xl transition-all duration-200"
-          >
-            <FaBell className="text-lg" />
-            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white dark:ring-surface-900 animate-pulse"></span>
-          </motion.button>
+          {/* Notification Center */}
+          <NotificationCenter />
           
           {/* Divider */}
           <div className="hidden sm:block h-8 w-px bg-gray-200 dark:bg-surface-700"></div>

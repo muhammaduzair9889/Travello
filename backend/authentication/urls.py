@@ -30,6 +30,16 @@ urlpatterns = [
     path('api/verify-password-reset-otp/', views.verify_password_reset_otp, name='verify_password_reset_otp'),
     
     # ============================================
+    # NOTIFICATION CENTRE API
+    # ============================================
+    path('notifications/', views.NotificationListView.as_view(), name='notification-list'),
+    path('notifications/count/', views.NotificationCountView.as_view(), name='notification-count'),
+    path('notifications/read/', views.NotificationMarkReadView.as_view(), name='notification-read-all'),
+    path('notifications/<int:pk>/read/', views.NotificationMarkReadView.as_view(), name='notification-read-one'),
+    path('notifications/<int:pk>/delete/', views.NotificationDeleteView.as_view(), name='notification-delete'),
+    path('notifications/clear/', views.NotificationClearView.as_view(), name='notification-clear'),
+
+    # ============================================
     # DJANGO TEMPLATE-BASED VIEWS (OPTIONAL)
     # ============================================
     path('signup-page/', views.signup_page, name='signup_page'),

@@ -264,11 +264,49 @@ export const bookingAPI = {
 export const paymentAPI = {
   createSession: (bookingId) => api.post('/payments/create-session/', { booking_id: bookingId }),
   getBookingStatus: (bookingId) => api.get(`/payments/booking/${bookingId}/status/`),
+  simulate: (payload) => api.post('/payments/simulate/', payload),
+  invoice: (bookingId) => api.get(`/payments/booking/${bookingId}/invoice/`, { responseType: 'text' }),
+  breakdown: (bookingId) => api.get(`/payments/booking/${bookingId}/breakdown/`),
+  sendConfirmation: (bookingId) => api.post(`/payments/booking/${bookingId}/send-confirmation/`),
 };
 
 export const recommendationAPI = {
   getRecommendations: (preferences) => api.post('/recommendations/', preferences, { timeout: 120000 }),
   getDefaultRecommendations: () => api.get('/recommendations/', { timeout: 120000 }),
+};
+
+export const scraperAPI = {
+  /** Enqueue a scrape job — returns immediately with job_id and optional cached hotels */
+  scrapeHotels: (payload) => api.post('/scraper/scrape-hotels/', payload),
+  /** Lightweight poll for job progress */
+  jobStatus: (jobId) => api.get(`/scraper/job-status/${jobId}/`),
+  /** Fetch full results when job is COMPLETED */
+  jobResults: (jobId) => api.get(`/scraper/results/${jobId}/`),
+  /** Supported destinations */
+  destinations: () => api.get('/scraper/destinations/'),
+  /** Health / diagnostic check */
+  test: () => api.post('/scraper/test/'),
+};
+
+export const itineraryAPI = {
+  list: () => api.get('/itineraries/'),
+  generate: (data) => api.post('/itineraries/generate/', data, { timeout: 120000 }),
+  update: (id, data) => api.patch(`/itineraries/${id}/`, data),
+  regenerateDay: (id, dayIndex) => api.post(`/itineraries/${id}/regenerate-day/`, { day_index: dayIndex }),
+  regenerateFull: (id, data) => api.post(`/itineraries/${id}/regenerate-full/`, data),
+  replacePlace: (id, dayIndex, itemIndex, replacement) => api.post(`/itineraries/${id}/replace-place/`, { day_index: dayIndex, item_index: itemIndex, replacement }),
+  removePlace: (id, dayIndex, itemIndex) => api.post(`/itineraries/${id}/remove-place/`, { day_index: dayIndex, item_index: itemIndex }),
+  lockPlace: (id, placeId, locked) => api.post(`/itineraries/${id}/lock-place/`, { place_id: placeId, locked }),
+  reorder: (id, data) => api.post(`/itineraries/${id}/reorder/`, data),
+};
+
+export const notificationAPI = {
+  list: (params) => api.get('/auth/notifications/', { params }),
+  unreadCount: () => api.get('/auth/notifications/count/'),
+  markRead: (id) => api.post(id ? `/auth/notifications/${id}/read/` : '/auth/notifications/read/'),
+  markAllRead: () => api.post('/auth/notifications/read/'),
+  deleteOne: (id) => api.delete(`/auth/notifications/${id}/delete/`),
+  clearRead: () => api.post('/auth/notifications/clear/'),
 };
 
 export default api;

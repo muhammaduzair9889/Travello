@@ -30,4 +30,7 @@ urlpatterns = [
     
     # Hotel and booking endpoints
     path('api/', include('hotels.urls')),
+    
+    # Scraper endpoints
+    path('api/scraper/', include('scraper.urls')),
 ]

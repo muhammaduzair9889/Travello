@@ -863,7 +863,74 @@ def chat(request):
         )
 
 
-# ============================================
+# ═══════════════════════════════════════════════════
+#  NOTIFICATION CENTRE  API
+# ═══════════════════════════════════════════════════
+from .models import Notification
+from .serializers import NotificationSerializer
+from rest_framework.views import APIView
+from rest_framework.pagination import LimitOffsetPagination
+
+
+class NotificationListView(APIView):
+    """GET  /api/notifications/          — paginated list (latest first)
+       GET  /api/notifications/?unread=1 — only unread
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        qs = Notification.objects.filter(user=request.user)
+        if request.query_params.get('unread'):
+            qs = qs.filter(is_read=False)
+
+        paginator = LimitOffsetPagination()
+        paginator.default_limit = 30
+        page = paginator.paginate_queryset(qs, request)
+        serializer = NotificationSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class NotificationCountView(APIView):
+    """GET /api/notifications/count/ — unread count"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        unread = Notification.objects.filter(user=request.user, is_read=False).count()
+        return Response({'unread': unread})
+
+
+class NotificationMarkReadView(APIView):
+    """POST /api/notifications/read/     — mark all as read
+       POST /api/notifications/<id>/read/ — mark one as read
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk=None):
+        qs = Notification.objects.filter(user=request.user)
+        if pk:
+            qs = qs.filter(pk=pk)
+        updated = qs.filter(is_read=False).update(is_read=True)
+        return Response({'marked_read': updated})
+
+
+class NotificationDeleteView(APIView):
+    """DELETE /api/notifications/<id>/ — delete one notification"""
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        deleted, _ = Notification.objects.filter(user=request.user, pk=pk).delete()
+        if deleted:
+            return Response({'deleted': True})
+        return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class NotificationClearView(APIView):
+    """POST /api/notifications/clear/ — delete all read notifications"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        deleted, _ = Notification.objects.filter(user=request.user, is_read=True).delete()
+        return Response({'cleared': deleted})# ============================================
 # DJANGO TEMPLATES-BASED VIEWS (Optional Browser-based Auth)
 # ============================================
 

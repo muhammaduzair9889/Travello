@@ -255,22 +255,14 @@ class RecommendationEngine:
         availability: bool = True
     ) -> List[Dict]:
         """
-        Get recommendations based on query with filtering and re-ranking
-        
-        Args:
-            query: User search query (e.g., "luxury hotel near Badshahi Mosque")
-            top_n: Number of recommendations to return
-            city: Filter by city
-            category: Filter by category
-            min_price: Minimum price in PKR
-            max_price: Maximum price in PKR
-            min_rating: Minimum rating
-            item_type: 'hotel' or 'attraction'
-            availability: Only available items
-        
-        Returns:
-            List of recommendation dictionaries with scores and reasons
+        Get recommendations based on query with filtering and re-ranking.
+        Raises RuntimeError if ML model is not available.
         """
+        if self.model is None or self.tokenizer is None:
+            raise RuntimeError(
+                "ML model not loaded — dependencies missing or model not trained. "
+                "Rule-based fallback should be used instead."
+            )
         logger.info(f"\n🔍 Query: {query}")
         logger.info(f"Filters: city={city}, category={category}, price={min_price}-{max_price}, rating={min_rating}, type={item_type}")
         
@@ -354,16 +346,13 @@ class RecommendationEngine:
         same_type: bool = True
     ) -> List[Dict]:
         """
-        Find similar items to a given item
-        
-        Args:
-            item_id: ID of the item
-            top_n: Number of similar items to return
-            same_type: Only return items of same type
-        
-        Returns:
-            List of similar items
+        Find similar items to a given item.
+        Raises RuntimeError if ML model is not available.
         """
+        if self.model is None or self.tokenizer is None:
+            raise RuntimeError(
+                "ML model not loaded — cannot compute similarity without embeddings."
+            )
         # Get item embedding
         item_embedding = self.embeddings_normalized[item_id].reshape(1, -1)
         

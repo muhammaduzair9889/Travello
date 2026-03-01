@@ -174,5 +174,36 @@ class AdminLoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('Must include email and password')
 
 
+# ──────────────────────────────────────────────────
+# Notification serializers
+# ──────────────────────────────────────────────────
+from .models import Notification
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    time_ago = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = Notification
+        fields = ['id', 'title', 'message', 'category', 'priority', 'is_read', 'link', 'icon', 'created_at', 'time_ago']
+        read_only_fields = ['id', 'title', 'message', 'category', 'priority', 'link', 'icon', 'created_at']
+
+    def get_time_ago(self, obj):
+        from django.utils import timezone
+        delta = timezone.now() - obj.created_at
+        seconds = int(delta.total_seconds())
+        if seconds < 60:
+            return 'just now'
+        elif seconds < 3600:
+            m = seconds // 60
+            return f'{m}m ago'
+        elif seconds < 86400:
+            h = seconds // 3600
+            return f'{h}h ago'
+        else:
+            d = seconds // 86400
+            return f'{d}d ago'
+
+
 
 

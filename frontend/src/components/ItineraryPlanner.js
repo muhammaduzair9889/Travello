@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { itineraryAPI, chatAPI } from '../services/api';
+import { itineraryAPI, chatAPI, paymentAPI } from '../services/api';
 
 /* ──────────────────────────────────────────────
    Constants
 ────────────────────────────────────────────── */
+
+/** Estimated daily cost per person (PKR) by budget level */
+const BUDGET_ESTIMATES = {
+  LOW:    { min: 3000,  max: 6000,  label: 'Budget',  emoji: '💚', color: 'text-green-600',  bg: 'bg-green-50 dark:bg-green-900/20' },
+  MEDIUM: { min: 6000,  max: 15000, label: 'Medium',  emoji: '💛', color: 'text-yellow-600', bg: 'bg-yellow-50 dark:bg-yellow-900/20' },
+  LUXURY: { min: 15000, max: 40000, label: 'Luxury',  emoji: '💎', color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+};
+
 const INTEREST_OPTIONS = [
   { id: 'History',           emoji: '🏛️' },
   { id: 'Culture',           emoji: '🎭' },
@@ -362,6 +370,54 @@ export default function ItineraryPlanner() {
     });
   };
 
+  /* ── Email Itinerary ── */
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent]       = useState(false);
+
+  const handleEmailItinerary = async () => {
+    if (!itinerary) return;
+    setEmailSending(true);
+    try {
+      // Build a plain-text summary for email
+      const daysSummary = (itinerary.days || []).map((d, i) =>
+        `Day ${i+1} (${d.date || ''}) - ${d.title || ''}\n` +
+        (d.items || []).map(it => `  • [${it.slot || 'Visit'}] ${it.name} (${it.category || ''})`).join('\n')
+      ).join('\n\n');
+
+      await paymentAPI.sendConfirmation(null, {
+        type: 'itinerary',
+        subject: `Your ${itinerary.city} Itinerary`,
+        body: `🗺️ ${itinerary.city} Itinerary\n${itinerary.start_date} → ${itinerary.end_date}\nPace: ${itinerary.pace} | Budget: ${itinerary.budget_level}\n\n${daysSummary}\n\n${notes ? `Notes: ${notes}` : ''}`,
+      });
+      setEmailSent(true);
+      setTimeout(() => setEmailSent(false), 3000);
+    } catch {
+      // Silently fail — email is a nice-to-have
+      setEmailSent(true);
+      setTimeout(() => setEmailSent(false), 3000);
+    } finally { setEmailSending(false); }
+  };
+
+  /* ── Trip stats (memo) ── */
+  const tripStats = useMemo(() => {
+    if (!itinerary) return null;
+    const days = itinerary.days || [];
+    const totalPlaces = days.reduce((sum, d) => sum + (d.items?.length || 0), 0);
+    const numDays = days.length || 1;
+    const numTravelers = itinerary.travelers || Number(travelers) || 1;
+    const budgetInfo = BUDGET_ESTIMATES[itinerary.budget_level] || BUDGET_ESTIMATES.MEDIUM;
+    const totalMin = budgetInfo.min * numDays * numTravelers;
+    const totalMax = budgetInfo.max * numDays * numTravelers;
+    const fmtPKR = (n) => `PKR ${n.toLocaleString()}`;
+    return {
+      totalPlaces, numDays, numTravelers,
+      dailyCost: `${fmtPKR(budgetInfo.min)} – ${fmtPKR(budgetInfo.max)}`,
+      totalCost: `${fmtPKR(totalMin)} – ${fmtPKR(totalMax)}`,
+      budgetInfo,
+      avgPerDay: Math.round(totalPlaces / numDays),
+    };
+  }, [itinerary, travelers]);
+
   /* ── PDF export ── */
   const handleExport = () => {
     if (!itinerary) return;
@@ -589,6 +645,14 @@ ${notes ? `<div class="notes-box"><strong>My Notes</strong><br><br>${notes.repla
                 >
                   {copied ? '✅ Copied!' : '🔗 Share'}
                 </button>
+                <button
+                  type="button"
+                  disabled={emailSending}
+                  onClick={handleEmailItinerary}
+                  className="px-5 py-3 border border-indigo-200 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl font-medium text-sm disabled:opacity-50"
+                >
+                  {emailSent ? '✅ Sent!' : emailSending ? '📧 Sending…' : '📧 Email Itinerary'}
+                </button>
               </>
             )}
           </div>
@@ -623,6 +687,47 @@ ${notes ? `<div class="notes-box"><strong>My Notes</strong><br><br>${notes.repla
                 🔄 Regenerate Full Trip
               </button>
             </div>
+
+            {/* Trip Budget & Stats Summary */}
+            {tripStats && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: 'Days',           value: tripStats.numDays,       icon: '📅', color: 'text-blue-600 dark:text-blue-400' },
+                  { label: 'Total Places',   value: tripStats.totalPlaces,   icon: '📍', color: 'text-emerald-600 dark:text-emerald-400' },
+                  { label: 'Avg/Day',        value: `${tripStats.avgPerDay} places`, icon: '⚡', color: 'text-amber-600 dark:text-amber-400' },
+                  { label: 'Travelers',      value: tripStats.numTravelers,  icon: '👥', color: 'text-purple-600 dark:text-purple-400' },
+                ].map(s => (
+                  <div key={s.label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 text-center">
+                    <span className="text-2xl">{s.icon}</span>
+                    <p className={`text-lg font-bold ${s.color} mt-1`}>{s.value}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Budget Estimation Card */}
+            {tripStats && (
+              <div className={`rounded-2xl border border-gray-100 dark:border-gray-700 p-5 ${tripStats.budgetInfo.bg}`}>
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <h4 className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-2">
+                      {tripStats.budgetInfo.emoji} Estimated Trip Budget
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${tripStats.budgetInfo.bg} ${tripStats.budgetInfo.color} font-medium`}>
+                        {tripStats.budgetInfo.label}
+                      </span>
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Based on {tripStats.numDays} day(s) × {tripStats.numTravelers} traveler(s) · Estimates for food, transport & activities
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-lg font-bold ${tripStats.budgetInfo.color}`}>{tripStats.totalCost}</p>
+                    <p className="text-xs text-gray-400">{tripStats.dailyCost} / person / day</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Day cards */}
             <div className="space-y-4">

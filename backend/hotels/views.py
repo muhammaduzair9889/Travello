@@ -443,14 +443,16 @@ class RealTimeHotelSearchView(APIView):
                 'checkout': check_out,
                 'adults': adults,
                 'rooms': 1,
-                'children': children
+                'children': children,
+                'max_results': 1000,
+                'max_seconds': 600,
             }
             
             result = subprocess.run(
                 ['node', scraper_script, json.dumps(search_params)],
                 capture_output=True,
                 text=True,
-                timeout=300,
+                timeout=1200,
                 cwd=scraper_dir,
                 encoding='utf-8',
                 errors='replace'
@@ -462,6 +464,9 @@ class RealTimeHotelSearchView(APIView):
                     parsed = json.loads(line)
                     if isinstance(parsed, list):
                         hotels = parsed
+                        break
+                    if isinstance(parsed, dict) and isinstance(parsed.get('hotels'), list):
+                        hotels = parsed['hotels']
                         break
                 except json.JSONDecodeError:
                     continue
@@ -610,8 +615,32 @@ class ScrapedHotelBookingView(APIView):
             )
             
             # 2. Map the room type string to a valid choice
-            room_type_str = data['room_type'].lower()
+            room_type_str = data['room_type'].lower().strip()
+            # Map common scraper room_type_key values to model choices
+            room_type_map = {
+                'single': 'single',
+                'double': 'double',
+                'triple': 'triple',
+                'quad': 'quad',
+                'quint': 'quint',
+                'family': 'family',
+                'suite': 'suite',
+                'deluxe': 'deluxe',
+                'dormitory': 'dormitory',
+                'entire': 'entire',
+                # Handle full names from scraper
+                'single room': 'single',
+                'double room': 'double',
+                'triple room': 'triple',
+                'quad room': 'quad',
+                'quint room': 'quint',
+                'family room': 'family',
+                'deluxe room': 'deluxe',
+                'standard room': 'double',
+                'entire property': 'entire',
+            }
             valid_types = dict(RoomType.ROOM_TYPE_CHOICES)
+            room_type_str = room_type_map.get(room_type_str, room_type_str)
             if room_type_str not in valid_types:
                 room_type_str = 'double'  # Sensible default for scraped hotels
             

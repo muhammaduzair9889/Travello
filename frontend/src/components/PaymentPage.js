@@ -197,8 +197,9 @@ const PaymentPage = () => {
   const [paying, setPaying]         = useState(false);
   const [error, setError]           = useState(null);
   const [validationError, setValidationError] = useState(null);
-  const [method, setMethod]         = useState('card'); // 'card' | 'cash_on_arrival'
+  const [method, setMethod]         = useState('card'); // 'card' | 'cash_on_arrival' | 'stripe'
   const [result, setResult]         = useState(null);
+  const [stripeLoading, setStripeLoading] = useState(false);
 
   /* Card fields */
   const [cardNumber, setCardNumber] = useState('');
@@ -267,6 +268,26 @@ const PaymentPage = () => {
     setError(null);
     setValidationError(null);
 
+    // ── Stripe real checkout ──
+    if (method === 'stripe') {
+      setStripeLoading(true);
+      try {
+        const res = await paymentAPI.createSession(bookingId);
+        if (res.data?.success && res.data?.session_url) {
+          // Send confirmation email before redirecting
+          try { await paymentAPI.sendConfirmation(bookingId); } catch {}
+          window.location.href = res.data.session_url;
+          return;
+        }
+        throw new Error(res.data?.error || 'Failed to create Stripe session');
+      } catch (err) {
+        setError(err.data?.error || err.message || 'Stripe checkout failed. Try another method.');
+      } finally {
+        setStripeLoading(false);
+      }
+      return;
+    }
+
     if (method === 'card') {
       const errs = validateCard();
       if (Object.keys(errs).length > 0) { setFieldErrors(errs); return; }
@@ -286,6 +307,8 @@ const PaymentPage = () => {
       const res = await paymentAPI.simulate(payload);
       if (res.data?.success) {
         setResult(res.data);
+        // Send confirmation email after successful payment
+        try { await paymentAPI.sendConfirmation(bookingId); } catch {}
       } else {
         throw new Error(res.data?.error || 'Payment failed');
       }
@@ -421,9 +444,10 @@ const PaymentPage = () => {
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                       Payment Method
                     </label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                       {[
-                        { id: 'card', label: 'Credit / Debit Card', icon: FaCreditCard },
+                        { id: 'stripe', label: 'Stripe Checkout', icon: FaCreditCard },
+                        { id: 'card', label: 'Test Card', icon: FaCreditCard },
                         { id: 'cash_on_arrival', label: 'Cash on Arrival', icon: FaMoneyBillWave },
                       ].map(({ id, label, icon: Icon }) => (
                         <button
@@ -531,18 +555,33 @@ const PaymentPage = () => {
                         <p className="text-xs opacity-75">Note: Some hotels may require a card as guarantee. Please confirm with the hotel directly.</p>
                       </motion.div>
                     )}
+
+                    {method === 'stripe' && (
+                      <motion.div key="stripe" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="p-5 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-xl text-sm text-indigo-800 dark:text-indigo-200 space-y-2">
+                        <p className="font-semibold flex items-center gap-2"><FaShieldAlt /> Stripe Secure Checkout</p>
+                        <p>You'll be securely redirected to Stripe's payment page to complete your transaction with real card processing.</p>
+                        <div className="flex items-center gap-3 mt-2 text-xs opacity-75">
+                          <span>✓ PCI DSS Compliant</span>
+                          <span>✓ 3D Secure</span>
+                          <span>✓ All major cards accepted</span>
+                        </div>
+                      </motion.div>
+                    )}
                   </AnimatePresence>
 
                   {/* Pay Button */}
                   <button
                     onClick={handlePay}
-                    disabled={paying}
+                    disabled={paying || stripeLoading}
                     className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-3 text-base"
                   >
-                    {paying ? (
+                    {paying || stripeLoading ? (
                       <><FaSpinner className="animate-spin" /> Processing…</>
+                    ) : method === 'stripe' ? (
+                      <><FaShieldAlt /> Pay with Stripe</>
                     ) : method === 'card' ? (
-                      <><FaCreditCard /> Confirm & Pay</>
+                      <><FaCreditCard /> Confirm & Pay (Test)</>
                     ) : (
                       <><FaCheckCircle /> Confirm Booking</>
                     )}

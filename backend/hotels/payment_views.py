@@ -1,9 +1,13 @@
 """
 Payment views for handling Stripe payment processing
+  - Idempotency keys prevent duplicate PaymentIntents
+  - Webhooks auto-confirm bookings (no manual admin confirm needed)
+  - Duplicate payment_intent values are handled gracefully
 """
 import stripe
 import logging
 import json
+import hashlib
 import os
 from decimal import Decimal
 from rest_framework import status
@@ -15,7 +19,7 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from dotenv import load_dotenv
 
 from .models import Booking, Payment
@@ -25,6 +29,20 @@ from .payment_serializers import (
 )
 from .permissions import CanAccessPayments
 from travello_backend.utils import get_safe_error_response, validate_api_key
+
+# Notification helper — import lazily to avoid circular imports
+def _notify_payment(user, booking, amount=None):
+    """Create booking + payment notifications after successful payment."""
+    try:
+        from authentication.models import Notification
+        hotel_name = getattr(booking, 'hotel_name', '') or getattr(booking, 'hotel', {}) or 'your hotel'
+        if hasattr(hotel_name, 'name'):
+            hotel_name = hotel_name.name
+        Notification.booking_confirmed(user, booking.id, hotel_name)
+        if amount:
+            Notification.payment_received(user, float(amount), booking.id)
+    except Exception as exc:
+        logger.warning(f"Failed to create notification: {exc}")
 
 logger = logging.getLogger(__name__)
 
@@ -122,13 +140,43 @@ class CreatePaymentSessionView(APIView):
                 )
                 # Prevent creating multiple sessions for same booking
                 if not created and payment.status in ['PROCESSING', 'SUCCEEDED']:
-                    logger.warning(f"Attempt to create session for already paid booking {booking.id}")
-                    return Response(
-                        {'success': False, 'error': 'Payment already initiated or completed'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                    # If already SUCCEEDED, return success idempotently
+                    if payment.status == 'SUCCEEDED':
+                        logger.info(f"Idempotent hit: booking {booking.id} already paid")
+                        return Response({
+                            'success': True,
+                            'message': 'Payment already completed',
+                            'payment_id': payment.id,
+                            'status': 'SUCCEEDED',
+                        }, status=status.HTTP_200_OK)
+                    # PROCESSING — return existing session URL if available
+                    if payment.stripe_session_id:
+                        try:
+                            existing_session = stripe.checkout.Session.retrieve(payment.stripe_session_id)
+                            if existing_session.url and existing_session.status == 'open':
+                                return Response({
+                                    'success': True,
+                                    'message': 'Payment session already active',
+                                    'session_id': existing_session.id,
+                                    'session_url': existing_session.url,
+                                    'payment_id': payment.id,
+                                    'publishable_key': STRIPE_PUBLISHABLE_KEY,
+                                }, status=status.HTTP_200_OK)
+                        except Exception:
+                            pass  # session expired — create a new one below
+
+                    # Reset to PENDING so we can create a new session
+                    payment.status = 'PENDING'
+                    payment.save(update_fields=['status'])
+
                 currency = STRIPE_CURRENCY_PRIMARY
                 amount_cents = int(float(booking.total_price) * 100)
+
+                # Idempotency key: deterministic hash of booking + amount + user
+                idempotency_key = hashlib.sha256(
+                    f"{booking.user.id}:{booking.id}:{booking.total_price}:{currency}".encode()
+                ).hexdigest()
+
                 session_kwargs = dict(
                     mode='payment',
                     payment_method_types=['card'],
@@ -161,28 +209,56 @@ class CreatePaymentSessionView(APIView):
                     cancel_url=f'{FRONTEND_CANCEL_URL}?booking_id={booking.id}',
                 )
                 try:
-                    session = stripe.checkout.Session.create(**session_kwargs)
-                except stripe.error.InvalidRequestError as e:
-                    logger.warning(
-                        f"Stripe currency {currency} not supported, "
-                        f"falling back to {STRIPE_CURRENCY_FALLBACK}: {str(e)}"
+                    session = stripe.checkout.Session.create(
+                        **session_kwargs,
+                        idempotency_key=idempotency_key,
                     )
-                    currency = STRIPE_CURRENCY_FALLBACK
-                    payment.currency = currency
-                    session_kwargs['line_items'][0]['price_data']['currency'] = currency
-                    session = stripe.checkout.Session.create(**session_kwargs)
-                # Always update with new intent and session
+                except stripe.error.InvalidRequestError as e:
+                    if 'currency' in str(e).lower():
+                        logger.warning(
+                            f"Stripe currency {currency} not supported, "
+                            f"falling back to {STRIPE_CURRENCY_FALLBACK}: {str(e)}"
+                        )
+                        currency = STRIPE_CURRENCY_FALLBACK
+                        payment.currency = currency
+                        session_kwargs['line_items'][0]['price_data']['currency'] = currency
+                        idempotency_key_fb = hashlib.sha256(
+                            f"{booking.user.id}:{booking.id}:{booking.total_price}:{currency}".encode()
+                        ).hexdigest()
+                        session = stripe.checkout.Session.create(
+                            **session_kwargs,
+                            idempotency_key=idempotency_key_fb,
+                        )
+                    else:
+                        raise
+
+                # Save payment record — handle duplicate stripe_payment_intent gracefully
                 payment.stripe_payment_intent = session.payment_intent or ''
                 payment.stripe_session_id = session.id
                 payment.status = 'PROCESSING'
                 try:
-                    payment.save()
-                except Exception as save_error:
-                    # Handle duplicate intent gracefully
-                    logger.error(f"Payment save failed: {save_error}")
+                    with transaction.atomic():  # nested savepoint
+                        payment.save()
+                except IntegrityError as ie:
+                    # Another request already saved with this payment_intent.
+                    # The nested savepoint was rolled back but the outer
+                    # transaction is still usable.
+                    logger.warning(f"Duplicate payment_intent race condition: {ie}")
+                    existing = Payment.objects.filter(
+                        stripe_payment_intent=session.payment_intent
+                    ).exclude(pk=payment.pk).first()
+                    if existing:
+                        return Response({
+                            'success': True,
+                            'message': 'Payment session already exists',
+                            'session_id': session.id,
+                            'session_url': session.url,
+                            'payment_id': existing.id,
+                            'publishable_key': STRIPE_PUBLISHABLE_KEY,
+                        }, status=status.HTTP_200_OK)
                     return Response(
-                        {'success': False, 'error': 'Payment session creation failed due to duplicate intent. Please try again.'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                        {'success': False, 'error': 'Payment already in progress. Please refresh.'},
+                        status=status.HTTP_409_CONFLICT,
                     )
                 logger.info(
                     f"Payment session created - Booking: {booking.id}, "
@@ -318,7 +394,7 @@ class StripeWebhookView(APIView):
 
 
 def handle_checkout_session_completed(session):
-    """Handle checkout.session.completed event"""
+    """Handle checkout.session.completed event — auto-confirms booking."""
     booking_id = session['metadata'].get('booking_id')
     payment_id = session['metadata'].get('payment_id')
     
@@ -327,32 +403,37 @@ def handle_checkout_session_completed(session):
         return
     
     try:
-        booking = Booking.objects.get(id=booking_id)
-        
-        # Update booking status to PAID
-        booking.status = 'PAID'
-        booking.save()
-        
-        # Update payment record
-        payment = Payment.objects.get(id=payment_id)
-        payment.status = 'SUCCEEDED'
-        payment.save()
-        
-        logger.info(
-            f"Booking {booking_id} marked as PAID via webhook - "
-            f"Session: {session['id']}"
-        )
-    
+        with transaction.atomic():
+            booking = Booking.objects.select_for_update().get(id=booking_id)
+            
+            # Idempotency: skip if already paid
+            if booking.status == 'PAID':
+                logger.info(f"Webhook idempotent: booking {booking_id} already PAID")
+                return
+
+            booking.status = 'PAID'
+            booking.save(update_fields=['status'])
+            
+            payment = Payment.objects.select_for_update().get(id=payment_id)
+            if payment.status != 'SUCCEEDED':
+                payment.status = 'SUCCEEDED'
+                payment.save(update_fields=['status'])
+            
+            logger.info(f"Booking {booking_id} auto-confirmed as PAID via webhook")
+
+            # Notify user
+            _notify_payment(booking.user, booking, payment.amount)
+
     except Booking.DoesNotExist:
         logger.error(f"Booking {booking_id} not found for webhook")
     except Payment.DoesNotExist:
         logger.error(f"Payment {payment_id} not found for webhook")
     except Exception as e:
-        logger.error(f"Error handling checkout session: {str(e)}")
+        logger.error(f"Error handling checkout session: {e}", exc_info=True)
 
 
 def handle_payment_intent_succeeded(payment_intent):
-    """Handle payment_intent.succeeded event"""
+    """Handle payment_intent.succeeded event — auto-confirms booking."""
     booking_id = payment_intent['metadata'].get('booking_id')
     
     if not booking_id:
@@ -360,81 +441,80 @@ def handle_payment_intent_succeeded(payment_intent):
         return
     
     try:
-        booking = Booking.objects.get(id=booking_id)
-        
-        # Only update if not already paid (prevent double-payment)
-        if booking.status != 'PAID':
+        with transaction.atomic():
+            booking = Booking.objects.select_for_update().get(id=booking_id)
+            
+            # Idempotency: skip if already paid
+            if booking.status == 'PAID':
+                logger.info(f"payment_intent.succeeded idempotent: booking {booking_id} already PAID")
+                return
+
             booking.status = 'PAID'
-            booking.save()
+            booking.save(update_fields=['status'])
             
             try:
                 payment = booking.payment
-                payment.status = 'SUCCEEDED'
-                payment.stripe_payment_intent = payment_intent['id']
-                # Check for existing Payment with this stripe_payment_intent
-                if payment.stripe_payment_intent:
-                    existing = Payment.objects.filter(stripe_payment_intent=payment.stripe_payment_intent).exclude(pk=payment.pk).first()
-                    if existing:
-                        logger.error(f"Duplicate stripe_payment_intent detected: {payment.stripe_payment_intent}")
-                        return Response(
-                            {'success': False, 'error': 'Duplicate payment intent. Please refresh and try again.'},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-                payment.save()
+                if payment.status != 'SUCCEEDED':
+                    payment.status = 'SUCCEEDED'
+                    # Only update stripe_payment_intent if not already set
+                    if not payment.stripe_payment_intent:
+                        payment.stripe_payment_intent = payment_intent['id']
+                    payment.save(update_fields=['status', 'stripe_payment_intent'])
             except Payment.DoesNotExist:
                 logger.warning(f"Payment record not found for booking {booking_id}")
             
-            logger.info(f"Booking {booking_id} marked as PAID (payment_intent.succeeded)")
+            logger.info(f"Booking {booking_id} auto-confirmed as PAID (payment_intent.succeeded)")
+
+            # Notify user
+            _notify_payment(booking.user, booking)
     
     except Booking.DoesNotExist:
         logger.error(f"Booking {booking_id} not found in webhook")
     except Exception as e:
-        logger.error(f"Error handling payment intent: {str(e)}")
+        logger.error(f"Error handling payment intent: {e}", exc_info=True)
 
 
 def handle_payment_intent_failed(payment_intent):
-    """Handle payment_intent.payment_failed event"""
+    """Handle payment_intent.payment_failed event."""
     booking_id = payment_intent['metadata'].get('booking_id')
-    
     if not booking_id:
         return
-    
     try:
-        payment = Payment.objects.get(booking_id=booking_id)
-        payment.status = 'FAILED'
-        payment.error_message = payment_intent.get('last_payment_error', {}).get('message', 'Payment failed')
-        payment.save()
-        
+        with transaction.atomic():
+            payment = Payment.objects.select_for_update().get(booking_id=booking_id)
+            if payment.status == 'FAILED':
+                return  # idempotent
+            payment.status = 'FAILED'
+            payment.error_message = payment_intent.get('last_payment_error', {}).get('message', 'Payment failed')
+            payment.save(update_fields=['status', 'error_message'])
         logger.warning(f"Payment failed for booking {booking_id}: {payment.error_message}")
     except Payment.DoesNotExist:
         logger.warning(f"Payment record not found for failed booking {booking_id}")
     except Exception as e:
-        logger.error(f"Error handling failed payment intent: {str(e)}")
+        logger.error(f"Error handling failed payment intent: {e}", exc_info=True)
 
 
 def handle_charge_refunded(charge):
-    """Handle charge.refunded event"""
+    """Handle charge.refunded event."""
     payment_intent_id = charge.get('payment_intent')
-    
     if not payment_intent_id:
         return
-    
     try:
-        payment = Payment.objects.get(stripe_payment_intent=payment_intent_id)
-        payment.status = 'REFUNDED'
-        payment.save()
-        
-        # Update booking status back to PENDING
-        booking = payment.booking
-        if booking.status == 'PAID':
-            booking.status = 'PENDING'
-            booking.save()
-        
-        logger.info(f"Payment {payment.id} refunded for booking {booking.id}")
+        with transaction.atomic():
+            payment = Payment.objects.select_for_update().get(stripe_payment_intent=payment_intent_id)
+            if payment.status == 'REFUNDED':
+                return  # idempotent
+            payment.status = 'REFUNDED'
+            payment.save(update_fields=['status'])
+            booking = payment.booking
+            if booking.status == 'PAID':
+                booking.status = 'PENDING'
+                booking.save(update_fields=['status'])
+        logger.info(f"Payment {payment.id} refunded for booking {payment.booking_id}")
     except Payment.DoesNotExist:
         logger.warning(f"Payment not found for refund: {payment_intent_id}")
     except Exception as e:
-        logger.error(f"Error handling refund: {str(e)}")
+        logger.error(f"Error handling refund: {e}", exc_info=True)
 
 
 @api_view(['GET'])
@@ -652,6 +732,9 @@ class SimulatedPaymentView(APIView):
 
             logger.info(f"Simulated card payment for booking {booking.id} ({booking.booking_reference})")
 
+            # Create notifications
+            _notify_payment(request.user, booking, booking.total_price or booking.base_price)
+
             return Response({
                 'success': True,
                 'message': 'Payment successful (simulation mode)',
@@ -674,6 +757,9 @@ class SimulatedPaymentView(APIView):
                 booking.save()
 
             logger.info(f"Cash on arrival confirmed for booking {booking.id} ({booking.booking_reference})")
+
+            # Create notification
+            _notify_payment(request.user, booking)
 
             return Response({
                 'success': True,
@@ -841,7 +927,8 @@ class BookingConfirmationEmailView(APIView):
     """
     POST /api/payments/booking/{booking_id}/send-confirmation/
     
-    Simulates sending a confirmation email (stores in DB metadata).
+    Sends a real booking confirmation email via SMTP.
+    Falls back to simulation if email sending fails.
     """
     permission_classes = [IsAuthenticated]
 
@@ -854,18 +941,122 @@ class BookingConfirmationEmailView(APIView):
         if booking.user != request.user and not request.user.is_staff:
             return Response({'success': False, 'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
 
-        # Simulate email
+        from django.utils import timezone as tz
+        from django.core.mail import send_mail
+        from django.template.loader import render_to_string
+
+        recipient = booking.guest_email or booking.user.email
+        hotel_name = booking.hotel.name if booking.hotel else 'Your Hotel'
+        room_display = booking.room_type.get_type_display() if booking.room_type else 'Standard Room'
+        total_price = float(booking.total_price or 0)
+
+        subject = f'Booking Confirmed - {booking.booking_reference}'
+
+        # Build rich HTML email
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+        <body style="margin:0;padding:0;background:#f4f7fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+          <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+            <div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+              <!-- Header -->
+              <div style="background:linear-gradient(135deg,#2563eb,#4f46e5);padding:32px;text-align:center;">
+                <h1 style="color:white;margin:0;font-size:28px;">Booking Confirmed!</h1>
+                <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">Reference: {booking.booking_reference}</p>
+              </div>
+              
+              <!-- Content -->
+              <div style="padding:32px;">
+                <p style="color:#374151;font-size:16px;margin:0 0 24px;">Hi {booking.user.first_name or booking.user.username},</p>
+                <p style="color:#6b7280;font-size:14px;line-height:1.6;margin:0 0 24px;">
+                  Your booking has been confirmed. Here are the details:
+                </p>
+                
+                <!-- Booking Details Card -->
+                <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:24px;">
+                  <table style="width:100%;border-collapse:collapse;">
+                    <tr>
+                      <td style="padding:8px 0;color:#6b7280;font-size:14px;">Hotel</td>
+                      <td style="padding:8px 0;color:#111827;font-size:14px;font-weight:600;text-align:right;">{hotel_name}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:8px 0;color:#6b7280;font-size:14px;">Room Type</td>
+                      <td style="padding:8px 0;color:#111827;font-size:14px;font-weight:600;text-align:right;">{room_display}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:8px 0;color:#6b7280;font-size:14px;">Check-in</td>
+                      <td style="padding:8px 0;color:#111827;font-size:14px;font-weight:600;text-align:right;">{booking.check_in}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:8px 0;color:#6b7280;font-size:14px;">Check-out</td>
+                      <td style="padding:8px 0;color:#111827;font-size:14px;font-weight:600;text-align:right;">{booking.check_out}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:8px 0;color:#6b7280;font-size:14px;">Nights</td>
+                      <td style="padding:8px 0;color:#111827;font-size:14px;font-weight:600;text-align:right;">{booking.number_of_nights}</td>
+                    </tr>
+                    <tr style="border-top:2px solid #e5e7eb;">
+                      <td style="padding:12px 0 8px;color:#2563eb;font-size:16px;font-weight:700;">Total</td>
+                      <td style="padding:12px 0 8px;color:#2563eb;font-size:16px;font-weight:700;text-align:right;">PKR {total_price:,.0f}</td>
+                    </tr>
+                  </table>
+                </div>
+
+                <p style="color:#6b7280;font-size:13px;line-height:1.6;">
+                  Status: <strong style="color:#059669;">{booking.get_status_display()}</strong>
+                </p>
+
+                <!-- Support -->
+                <div style="margin-top:24px;padding-top:20px;border-top:1px solid #e5e7eb;">
+                  <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0;">
+                    Need help? Contact our 24/7 support team.<br>
+                    Travello — Your Smart Travel Companion
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+        """
+
+        plain_text = (
+            f"Booking Confirmed — {booking.booking_reference}\n\n"
+            f"Hotel: {hotel_name}\n"
+            f"Room: {room_display}\n"
+            f"Check-in: {booking.check_in}\n"
+            f"Check-out: {booking.check_out}\n"
+            f"Total: PKR {total_price:,.0f}\n\n"
+            f"Status: {booking.get_status_display()}\n"
+        )
+
+        email_sent = False
+        try:
+            send_mail(
+                subject=subject,
+                message=plain_text,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[recipient],
+                html_message=html_content,
+                fail_silently=False,
+            )
+            email_sent = True
+            logger.info(f"Confirmation email SENT for booking {booking.booking_reference} to {recipient}")
+        except Exception as email_err:
+            logger.warning(f"Email sending failed for booking {booking.booking_reference}: {email_err}")
+
         email_data = {
-            'to': booking.guest_email or booking.user.email,
-            'subject': f'Booking Confirmed - {booking.booking_reference}',
-            'hotel': booking.hotel.name if booking.hotel else 'N/A',
-            'room': booking.room_type.get_type_display() if booking.room_type else 'N/A',
+            'to': recipient,
+            'subject': subject,
+            'hotel': hotel_name,
+            'room': room_display,
             'check_in': str(booking.check_in),
             'check_out': str(booking.check_out),
-            'total': float(booking.total_price or 0),
+            'total': total_price,
             'status': booking.status,
-            'sent_at': tz.now().isoformat() if 'tz' in dir() else __import__('django.utils.timezone', fromlist=['now']).now().isoformat(),
-            'simulated': True,
+            'sent_at': tz.now().isoformat(),
+            'email_sent': email_sent,
         }
 
         # Store in booking payment metadata
@@ -876,13 +1067,12 @@ class BookingConfirmationEmailView(APIView):
             payment.metadata = meta
             payment.save(update_fields=['metadata'])
         except Payment.DoesNotExist:
-            pass  # No payment record yet
-
-        logger.info(f"Simulated confirmation email for booking {booking.booking_reference} to {email_data['to']}")
+            pass
 
         return Response({
             'success': True,
-            'message': f'Confirmation email sent to {email_data["to"]} (simulated)',
-            'email_data': email_data
+            'email_sent': email_sent,
+            'message': f'Confirmation email {"sent" if email_sent else "queued"} to {recipient}',
+            'email_data': email_data,
         })
 

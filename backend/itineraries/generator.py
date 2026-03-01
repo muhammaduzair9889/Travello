@@ -45,44 +45,158 @@ MOOD_TAG_MAP = {
 
 
 DEFAULT_LAHORE_PLACES = [
-    # History / Culture - Historical, Spiritual
-    dict(name='Badshahi Mosque', category='Religious', tags=['religious', 'spiritual', 'history', 'historical', 'culture'], minutes=120, budget='LOW', lat=31.5881, lon=74.3106, rating=4.8, start=8, end=18, popularity=95),
-    dict(name='Lahore Fort', category='History', tags=['history', 'historical', 'culture'], minutes=150, budget='LOW', lat=31.5887, lon=74.3133, rating=4.7, start=9, end=17, popularity=93),
-    dict(name='Shalimar Gardens', category='Nature', tags=['nature', 'relaxing', 'history', 'historical', 'culture', 'romantic'], minutes=120, budget='LOW', lat=31.5840, lon=74.3816, rating=4.6, start=9, end=18, popularity=88),
-    dict(name='Minar-e-Pakistan', category='History', tags=['history', 'historical', 'culture'], minutes=75, budget='LOW', lat=31.5925, lon=74.3095, rating=4.6, start=9, end=21, popularity=90),
-    dict(name='Lahore Museum', category='Culture', tags=['culture', 'history', 'historical'], minutes=120, budget='LOW', lat=31.5696, lon=74.3096, rating=4.5, start=9, end=17, popularity=80),
-    dict(name='Walled City (Delhi Gate Area)', category='Culture', tags=['culture', 'history', 'historical', 'food', 'foodie'], minutes=150, budget='LOW', lat=31.5822, lon=74.3150, rating=4.6, start=10, end=22, popularity=87),
-    dict(name='Data Darbar', category='Religious', tags=['religious', 'spiritual', 'culture'], minutes=90, budget='LOW', lat=31.5725, lon=74.3127, rating=4.5, start=6, end=22, popularity=85),
-    dict(name='Tomb of Jahangir', category='History', tags=['history', 'historical', 'culture', 'relaxing'], minutes=90, budget='LOW', lat=31.6176, lon=74.2960, rating=4.4, start=9, end=17, popularity=75),
+    # ==================== MUST SEE ATTRACTIONS (IDs 1-25, 96-120) ====================
+    dict(name='Badshahi Mosque', category='Religious', tags=['religious', 'spiritual', 'history', 'historical', 'culture'], minutes=120, budget='LOW', lat=31.588056, lon=74.309444, rating=4.8, start=8, end=18),
+    dict(name='Lahore Fort (Shahi Qila)', category='History', tags=['history', 'historical', 'culture'], minutes=150, budget='LOW', lat=31.588333, lon=74.315278, rating=4.7, start=9, end=17),
+    dict(name='Minar-e-Pakistan', category='History', tags=['history', 'historical', 'culture'], minutes=75, budget='LOW', lat=31.5925, lon=74.309444, rating=4.6, start=9, end=21),
+    dict(name='Lahore Museum', category='Culture', tags=['culture', 'history', 'historical'], minutes=120, budget='LOW', lat=31.5693, lon=74.3107, rating=4.5, start=9, end=17),
+    dict(name='Shalimar Gardens', category='Nature', tags=['nature', 'relaxing', 'history', 'historical', 'culture', 'romantic'], minutes=120, budget='LOW', lat=31.585833, lon=74.381944, rating=4.6, start=9, end=18),
+    dict(name='Wazir Khan Mosque', category='Religious', tags=['religious', 'spiritual', 'history', 'historical', 'culture'], minutes=90, budget='LOW', lat=31.581944, lon=74.321667, rating=4.7, start=8, end=18),
+    dict(name='Data Darbar', category='Religious', tags=['religious', 'spiritual', 'culture'], minutes=90, budget='LOW', lat=31.5700, lon=74.3100, rating=4.5, start=6, end=22),
+    dict(name='Jahangir\'s Tomb', category='History', tags=['history', 'historical', 'culture', 'relaxing'], minutes=90, budget='LOW', lat=31.620556, lon=74.276944, rating=4.4, start=9, end=17),
+    dict(name='Tomb of Allama Iqbal', category='History', tags=['history', 'historical', 'culture', 'spiritual'], minutes=60, budget='LOW', lat=31.5883, lon=74.3100, rating=4.5, start=9, end=18),
+    dict(name='Lahore Zoo', category='Nature', tags=['nature', 'family', 'fun'], minutes=120, budget='LOW', lat=31.5573, lon=74.3287, rating=4.1, start=9, end=17),
+    dict(name='Chauburji', category='History', tags=['history', 'historical', 'culture'], minutes=60, budget='LOW', lat=31.5397, lon=74.3333, rating=4.2, start=9, end=17),
+    dict(name='Hazuri Bagh', category='Nature', tags=['nature', 'history', 'historical', 'relaxing'], minutes=60, budget='LOW', lat=31.5879, lon=74.3107, rating=4.3, start=9, end=18),
+    dict(name='Tomb of Nur Jahan', category='History', tags=['history', 'historical', 'romantic'], minutes=60, budget='LOW', lat=31.6210, lon=74.2785, rating=4.3, start=9, end=17),
+    dict(name='Sheesh Mahal (Mirror Palace)', category='History', tags=['history', 'historical', 'culture'], minutes=75, budget='LOW', lat=31.5880, lon=74.3155, rating=4.6, start=9, end=17),
+    dict(name='Samadhi of Ranjit Singh', category='History', tags=['history', 'historical', 'culture', 'spiritual'], minutes=60, budget='LOW', lat=31.5883, lon=74.3097, rating=4.4, start=9, end=17),
+    dict(name='Delhi Gate (Old Lahore)', category='Culture', tags=['culture', 'history', 'historical', 'shopping'], minutes=90, budget='LOW', lat=31.5780, lon=74.3210, rating=4.3, start=10, end=22),
+    dict(name='Roshnai Gate', category='History', tags=['history', 'historical', 'culture'], minutes=45, budget='LOW', lat=31.5870, lon=74.3113, rating=4.2, start=9, end=18),
+    dict(name='Lahore High Court', category='Culture', tags=['culture', 'history', 'historical'], minutes=45, budget='LOW', lat=31.5580, lon=74.3217, rating=4.1, start=9, end=16),
+    dict(name='Kim\'s Gun (Zamzama)', category='History', tags=['history', 'historical', 'culture'], minutes=30, budget='LOW', lat=31.5692, lon=74.3105, rating=4.0, start=9, end=18),
+    dict(name='Fakir Khana Museum', category='Culture', tags=['culture', 'history', 'historical'], minutes=90, budget='LOW', lat=31.5768, lon=74.3152, rating=4.4, start=10, end=17),
+    dict(name='Sunehri Masjid (Golden Mosque)', category='Religious', tags=['religious', 'spiritual', 'history', 'culture'], minutes=60, budget='LOW', lat=31.5788, lon=74.3175, rating=4.4, start=8, end=18),
+    dict(name='Masjid Mariyam Zamani', category='Religious', tags=['religious', 'spiritual', 'history', 'historical'], minutes=45, budget='LOW', lat=31.5877, lon=74.3148, rating=4.3, start=8, end=18),
+    dict(name='Moti Masjid (Pearl Mosque)', category='Religious', tags=['religious', 'spiritual', 'history', 'historical'], minutes=45, budget='LOW', lat=31.5880, lon=74.3152, rating=4.3, start=9, end=17),
+    dict(name='Anarkali Tomb', category='History', tags=['history', 'historical', 'culture'], minutes=45, budget='LOW', lat=31.5567, lon=74.3200, rating=4.1, start=9, end=17),
+    dict(name='General Post Office', category='Culture', tags=['culture', 'history', 'historical'], minutes=30, budget='LOW', lat=31.5603, lon=74.3163, rating=4.0, start=9, end=16),
+    dict(name='Grand Jamia Mosque (Bahria Town)', category='Religious', tags=['religious', 'spiritual', 'modern'], minutes=120, budget='LOW', lat=31.3597, lon=74.1822, rating=4.7, start=8, end=20),
+    dict(name='Gurdwara Dera Sahib', category='Religious', tags=['religious', 'spiritual', 'history', 'historical'], minutes=60, budget='LOW', lat=31.5880, lon=74.3094, rating=4.4, start=8, end=18),
+    dict(name='Gurdwara Janam Asthan Guru Ram Das', category='Religious', tags=['religious', 'spiritual', 'history'], minutes=60, budget='LOW', lat=31.5798, lon=74.3183, rating=4.3, start=8, end=18),
+    dict(name='Tomb of Asif Khan', category='History', tags=['history', 'historical'], minutes=60, budget='LOW', lat=31.6219, lon=74.2772, rating=4.2, start=9, end=17),
+    dict(name='Shahi Hammam (Royal Bath)', category='Culture', tags=['culture', 'history', 'historical'], minutes=60, budget='LOW', lat=31.5819, lon=74.3217, rating=4.5, start=10, end=17),
+    dict(name='Alamgiri Gate (Lahore Fort)', category='History', tags=['history', 'historical', 'culture'], minutes=45, budget='LOW', lat=31.5880, lon=74.3133, rating=4.4, start=9, end=17),
+    dict(name='Naulakha Pavilion', category='History', tags=['history', 'historical', 'culture'], minutes=45, budget='LOW', lat=31.5881, lon=74.3150, rating=4.5, start=9, end=17),
+    dict(name='Tomb of Dai Anga', category='History', tags=['history', 'historical'], minutes=45, budget='LOW', lat=31.5920, lon=74.3278, rating=4.1, start=9, end=17),
+    dict(name='Bibi Pak Daman Shrine', category='Religious', tags=['religious', 'spiritual', 'history'], minutes=60, budget='LOW', lat=31.5480, lon=74.3367, rating=4.3, start=8, end=20),
+    dict(name='Shrine of Mian Mir', category='Religious', tags=['religious', 'spiritual', 'history'], minutes=60, budget='LOW', lat=31.5422, lon=74.3522, rating=4.4, start=8, end=20),
+    dict(name='Madho Lal Hussain Shrine', category='Religious', tags=['religious', 'spiritual', 'culture'], minutes=60, budget='LOW', lat=31.6050, lon=74.3650, rating=4.3, start=8, end=20),
+    dict(name='Walled City of Lahore', category='Culture', tags=['culture', 'history', 'historical', 'food', 'foodie', 'shopping'], minutes=180, budget='LOW', lat=31.5820, lon=74.3175, rating=4.6, start=10, end=22),
+    dict(name='Tomb of Qutb-ud-din Aibak', category='History', tags=['history', 'historical'], minutes=45, budget='LOW', lat=31.5625, lon=74.3097, rating=4.1, start=9, end=17),
+    dict(name='Government College University', category='Culture', tags=['culture', 'history', 'historical'], minutes=60, budget='LOW', lat=31.5622, lon=74.3258, rating=4.3, start=9, end=16),
+    dict(name='Punjab University Old Campus', category='Culture', tags=['culture', 'history', 'historical'], minutes=60, budget='LOW', lat=31.5573, lon=74.3247, rating=4.2, start=9, end=16),
+    dict(name='Aitchison College', category='Culture', tags=['culture', 'history', 'historical'], minutes=60, budget='LOW', lat=31.5350, lon=74.3478, rating=4.3, start=9, end=16),
+    dict(name='WAPDA House', category='Culture', tags=['culture', 'modern', 'history'], minutes=30, budget='LOW', lat=31.5597, lon=74.3178, rating=4.0, start=9, end=17),
+    dict(name='Lohari Gate', category='History', tags=['history', 'historical', 'culture'], minutes=45, budget='LOW', lat=31.5772, lon=74.3142, rating=4.1, start=9, end=18),
+    dict(name='Mochi Gate', category='History', tags=['history', 'historical', 'culture'], minutes=45, budget='LOW', lat=31.5848, lon=74.3185, rating=4.0, start=9, end=18),
+    dict(name='Bhatti Gate', category='History', tags=['history', 'historical', 'culture', 'food'], minutes=60, budget='LOW', lat=31.5778, lon=74.3228, rating=4.1, start=10, end=22),
+    dict(name='Akbari Gate', category='History', tags=['history', 'historical', 'culture', 'shopping'], minutes=45, budget='LOW', lat=31.5843, lon=74.3227, rating=4.0, start=9, end=18),
+    dict(name='Taxali Gate', category='History', tags=['history', 'historical', 'culture'], minutes=45, budget='LOW', lat=31.5850, lon=74.3125, rating=4.0, start=9, end=18),
+    dict(name='Lahore Railway Station', category='Culture', tags=['culture', 'history', 'historical'], minutes=45, budget='LOW', lat=31.5917, lon=74.3267, rating=4.2, start=6, end=22),
+    dict(name='Islamic Summit Minar', category='History', tags=['history', 'historical', 'culture'], minutes=30, budget='LOW', lat=31.5950, lon=74.3092, rating=4.1, start=9, end=18),
+    dict(name='Alhamra Arts Council', category='Culture', tags=['culture', 'modern', 'entertainment', 'fun'], minutes=120, budget='LOW', lat=31.5593, lon=74.3308, rating=4.4, start=10, end=22),
 
-    # Shopping
-    dict(name='Anarkali Bazaar', category='Shopping', tags=['shopping', 'culture', 'food', 'foodie'], minutes=120, budget='LOW', lat=31.5690, lon=74.3173, rating=4.4, start=11, end=22, popularity=82),
-    dict(name='Liberty Market (Gulberg)', category='Shopping', tags=['shopping', 'modern', 'food', 'foodie'], minutes=120, budget='MEDIUM', lat=31.5216, lon=74.3539, rating=4.4, start=12, end=23, popularity=78),
-    dict(name='Emporium Mall', category='Shopping', tags=['shopping', 'modern', 'food', 'family', 'fun', 'entertainment'], minutes=150, budget='MEDIUM', lat=31.4697, lon=74.2710, rating=4.6, start=12, end=23, popularity=85),
-    dict(name='Packages Mall', category='Shopping', tags=['shopping', 'modern', 'food', 'family', 'fun'], minutes=150, budget='MEDIUM', lat=31.4712, lon=74.3560, rating=4.6, start=12, end=23, popularity=83),
-    dict(name='Fortress Square Mall', category='Shopping', tags=['shopping', 'modern', 'fun', 'family'], minutes=120, budget='MEDIUM', lat=31.5197, lon=74.3760, rating=4.3, start=12, end=23, popularity=72),
+    # ==================== FOOD DESTINATIONS (IDs 26-65, 146-165) ====================
+    dict(name='Food Street Gawalmandi', category='Food', tags=['food', 'foodie', 'culture', 'romantic'], minutes=120, budget='LOW', lat=31.571997, lon=74.318875, rating=4.4, start=18, end=23),
+    dict(name='MM Alam Road', category='Food', tags=['food', 'foodie', 'modern', 'romantic'], minutes=120, budget='LUXURY', lat=31.521359, lon=74.351589, rating=4.5, start=12, end=23),
+    dict(name='Lakshmi Chowk', category='Food', tags=['food', 'foodie', 'culture'], minutes=90, budget='LOW', lat=31.567310, lon=74.324761, rating=4.3, start=19, end=2),
+    dict(name='Anarkali Food Street', category='Food', tags=['food', 'foodie', 'culture', 'shopping'], minutes=90, budget='LOW', lat=31.562481, lon=74.309333, rating=4.3, start=11, end=23),
+    dict(name='Fort Road Food Street', category='Food', tags=['food', 'foodie', 'culture', 'romantic'], minutes=120, budget='MEDIUM', lat=31.587249, lon=74.311586, rating=4.5, start=18, end=23),
+    dict(name='Butt Karahi (Lakshmi Chowk)', category='Food', tags=['food', 'foodie', 'culture'], minutes=90, budget='LOW', lat=31.5672, lon=74.3243, rating=4.5, start=18, end=23),
+    dict(name='Cafe Aylanto', category='Food', tags=['food', 'foodie', 'modern', 'romantic'], minutes=90, budget='LUXURY', lat=31.5168757, lon=74.3518081, rating=4.5, start=12, end=23),
+    dict(name='Cooco\'s Den', category='Food', tags=['food', 'foodie', 'culture', 'romantic'], minutes=90, budget='MEDIUM', lat=31.5870545, lon=74.3115511, rating=4.6, start=18, end=23),
+    dict(name='Bundu Khan (MM Alam)', category='Food', tags=['food', 'foodie', 'culture'], minutes=90, budget='MEDIUM', lat=31.5213, lon=74.3512, rating=4.4, start=12, end=23),
+    dict(name='Haveli Restaurant', category='Food', tags=['food', 'foodie', 'culture', 'romantic'], minutes=90, budget='MEDIUM', lat=31.5870129, lon=74.3114255, rating=4.5, start=18, end=23),
+    dict(name='Andaaz Restaurant', category='Food', tags=['food', 'foodie', 'culture', 'romantic'], minutes=90, budget='MEDIUM', lat=31.5871, lon=74.3112, rating=4.4, start=18, end=23),
+    dict(name='Salt\'n Pepper Village', category='Food', tags=['food', 'foodie', 'family'], minutes=90, budget='MEDIUM', lat=31.4683, lon=74.2648, rating=4.3, start=12, end=23),
+    dict(name='Monal Lahore', category='Food', tags=['food', 'foodie', 'modern', 'romantic'], minutes=120, budget='LUXURY', lat=31.5097528, lon=74.3410388, rating=4.5, start=12, end=23),
+    dict(name='Phajja Siri Paye', category='Food', tags=['food', 'foodie', 'culture'], minutes=60, budget='LOW', lat=31.5852863, lon=74.3125410, rating=4.4, start=6, end=14),
+    dict(name='Bashir Dar-ul-Mahi', category='Food', tags=['food', 'foodie', 'culture'], minutes=60, budget='LOW', lat=31.5118, lon=74.3453, rating=4.4, start=12, end=22),
+    dict(name='Peeru\'s Cafe', category='Food', tags=['food', 'foodie', 'culture', 'relaxing'], minutes=90, budget='MEDIUM', lat=31.4122864, lon=74.2327037, rating=4.3, start=11, end=22),
+    dict(name='Cosa Nostra', category='Food', tags=['food', 'foodie', 'modern', 'romantic'], minutes=90, budget='MEDIUM', lat=31.4609448, lon=74.4136984, rating=4.4, start=12, end=23),
+    dict(name='Nafees Bakers', category='Food', tags=['food', 'foodie', 'culture'], minutes=45, budget='LOW', lat=31.5117, lon=74.3445, rating=4.2, start=8, end=22),
+    dict(name='Waris Nihari (Walled City)', category='Food', tags=['food', 'foodie', 'culture'], minutes=60, budget='LOW', lat=31.5824, lon=74.3205, rating=4.5, start=6, end=14),
+    dict(name='Yummy 36 Paye', category='Food', tags=['food', 'foodie'], minutes=60, budget='LOW', lat=31.5783, lon=74.3142, rating=4.2, start=19, end=2),
+    dict(name='Heera Mandi Food Area', category='Food', tags=['food', 'foodie', 'culture'], minutes=90, budget='LOW', lat=31.5865, lon=74.3120, rating=4.3, start=18, end=23),
+    dict(name='Muhammadi Nihari', category='Food', tags=['food', 'foodie', 'culture'], minutes=60, budget='LOW', lat=31.5623, lon=74.3095, rating=4.3, start=6, end=14),
+    dict(name='Tayeb Kabab House', category='Food', tags=['food', 'foodie'], minutes=60, budget='LOW', lat=31.5671, lon=74.3239, rating=4.2, start=12, end=23),
+    dict(name='Cuckoo\'s Cafe (Liberty)', category='Food', tags=['food', 'foodie', 'modern'], minutes=90, budget='MEDIUM', lat=31.5113, lon=74.3447, rating=4.3, start=11, end=23),
+    dict(name='Nishat Hotel (Cinema Chowk)', category='Food', tags=['food', 'foodie', 'culture'], minutes=60, budget='LOW', lat=31.5625, lon=74.3128, rating=4.2, start=6, end=14),
+    dict(name='Khalifa Bakers', category='Food', tags=['food', 'foodie', 'culture'], minutes=45, budget='LOW', lat=31.5641, lon=74.3133, rating=4.3, start=8, end=22),
+    dict(name='Haji Sahab Haleem Wala', category='Food', tags=['food', 'foodie', 'culture'], minutes=60, budget='LOW', lat=31.5624, lon=74.3097, rating=4.4, start=12, end=22),
+    dict(name='Sadiq Halwa Puri', category='Food', tags=['food', 'foodie', 'culture'], minutes=60, budget='LOW', lat=31.5201583, lon=74.2911526, rating=4.3, start=6, end=12),
+    dict(name='Arcadian Cafe', category='Food', tags=['food', 'foodie', 'modern'], minutes=90, budget='MEDIUM', lat=31.5226637, lon=74.3495417, rating=4.2, start=10, end=23),
+    dict(name='Mughalia Restaurant', category='Food', tags=['food', 'foodie', 'culture', 'romantic'], minutes=90, budget='MEDIUM', lat=31.5872, lon=74.3110, rating=4.3, start=12, end=23),
+    dict(name='Cafe Zouk', category='Food', tags=['food', 'foodie', 'modern'], minutes=90, budget='MEDIUM', lat=31.5203649, lon=74.3516633, rating=4.3, start=10, end=23),
+    dict(name='X2 (MM Alam)', category='Food', tags=['food', 'foodie', 'modern', 'fun', 'entertainment'], minutes=120, budget='MEDIUM', lat=31.5205, lon=74.3508, rating=4.2, start=18, end=23),
+    dict(name='Howdy Cafe', category='Food', tags=['food', 'foodie', 'modern'], minutes=60, budget='MEDIUM', lat=31.5168, lon=74.3478, rating=4.1, start=11, end=23),
+    dict(name='Gun Smoke (DHA)', category='Food', tags=['food', 'foodie', 'modern'], minutes=90, budget='MEDIUM', lat=31.4785, lon=74.4082, rating=4.2, start=12, end=23),
+    dict(name='Zakir Tikka (Model Town)', category='Food', tags=['food', 'foodie', 'culture'], minutes=60, budget='LOW', lat=31.4750243, lon=74.3053249, rating=4.4, start=18, end=23),
+    dict(name='Faisal Broast', category='Food', tags=['food', 'foodie'], minutes=45, budget='LOW', lat=31.5082751, lon=74.3232818, rating=4.1, start=12, end=23),
+    dict(name='Malik Nihari', category='Food', tags=['food', 'foodie', 'culture'], minutes=60, budget='LOW', lat=31.5537450, lon=74.3141492, rating=4.2, start=6, end=14),
+    dict(name='Sheikh Abdul Ghani Paratha', category='Food', tags=['food', 'foodie', 'culture'], minutes=60, budget='LOW', lat=31.5672, lon=74.3245, rating=4.5, start=18, end=23),
+    dict(name='Monal (Liberty)', category='Food', tags=['food', 'foodie', 'modern'], minutes=90, budget='LUXURY', lat=31.5115, lon=74.3445, rating=4.4, start=12, end=23),
+    dict(name='Ambala Sweets', category='Food', tags=['food', 'foodie', 'culture'], minutes=30, budget='LOW', lat=31.5540, lon=74.3142, rating=4.2, start=9, end=22),
+    dict(name='Gourmet Restaurant', category='Food', tags=['food', 'foodie'], minutes=60, budget='LOW', lat=31.5118, lon=74.3447, rating=4.1, start=8, end=23),
+    dict(name='BBQ Tonight', category='Food', tags=['food', 'foodie', 'modern'], minutes=90, budget='MEDIUM', lat=31.5212, lon=74.3508, rating=4.3, start=18, end=23),
+    dict(name='English Tea House', category='Food', tags=['food', 'foodie', 'modern', 'romantic', 'relaxing'], minutes=90, budget='MEDIUM', lat=31.5205, lon=74.3512, rating=4.3, start=10, end=22),
+    dict(name='Dera Restaurant', category='Food', tags=['food', 'foodie', 'culture', 'family'], minutes=90, budget='MEDIUM', lat=31.4695, lon=74.4020, rating=4.3, start=12, end=23),
+    dict(name='Fujiyama (MM Alam)', category='Food', tags=['food', 'foodie', 'modern'], minutes=90, budget='LUXURY', lat=31.5210, lon=74.3514, rating=4.2, start=12, end=23),
+    dict(name='Shaheen Shinwari', category='Food', tags=['food', 'foodie', 'culture'], minutes=90, budget='LOW', lat=31.5420, lon=74.3120, rating=4.3, start=12, end=23),
 
-    # Nature / Parks - Relaxing, Nature, Romantic
-    dict(name='Jilani Park (Race Course Park)', category='Nature', tags=['nature', 'relaxing', 'romantic', 'family'], minutes=90, budget='LOW', lat=31.5282, lon=74.3339, rating=4.5, start=7, end=21, popularity=80),
-    dict(name='Greater Iqbal Park', category='Nature', tags=['nature', 'relaxing', 'romantic'], minutes=90, budget='LOW', lat=31.5925, lon=74.3096, rating=4.6, start=7, end=22, popularity=82),
-    dict(name='Model Town Park', category='Nature', tags=['nature', 'relaxing', 'family'], minutes=60, budget='LOW', lat=31.4828, lon=74.3196, rating=4.2, start=7, end=21, popularity=60),
-    dict(name='Bagh-e-Jinnah (Lawrence Gardens)', category='Nature', tags=['nature', 'relaxing', 'romantic', 'family'], minutes=90, budget='LOW', lat=31.5558, lon=74.3397, rating=4.5, start=7, end=20, popularity=78),
+    # ==================== SHOPPING AREAS (IDs 66-80, 121-128) ====================
+    dict(name='Liberty Market', category='Shopping', tags=['shopping', 'modern', 'food', 'foodie'], minutes=120, budget='MEDIUM', lat=31.511280, lon=74.345008, rating=4.4, start=12, end=23),
+    dict(name='Anarkali Bazaar', category='Shopping', tags=['shopping', 'culture', 'food', 'foodie'], minutes=120, budget='LOW', lat=31.562481, lon=74.309333, rating=4.4, start=11, end=22),
+    dict(name='Packages Mall', category='Shopping', tags=['shopping', 'modern', 'food', 'family', 'fun', 'entertainment'], minutes=150, budget='MEDIUM', lat=31.4711831, lon=74.3560264, rating=4.6, start=12, end=23),
+    dict(name='Emporium Mall', category='Shopping', tags=['shopping', 'modern', 'food', 'family', 'fun', 'entertainment'], minutes=150, budget='MEDIUM', lat=31.4671890, lon=74.2659803, rating=4.6, start=12, end=23),
+    dict(name='Fortress Stadium', category='Shopping', tags=['shopping', 'modern', 'fun'], minutes=120, budget='MEDIUM', lat=31.5317842, lon=74.3660636, rating=4.3, start=12, end=23),
+    dict(name='Pace Shopping Mall', category='Shopping', tags=['shopping', 'modern'], minutes=120, budget='MEDIUM', lat=31.5158879, lon=74.3520254, rating=4.2, start=12, end=22),
+    dict(name='Gulberg Main Market', category='Shopping', tags=['shopping', 'modern', 'food'], minutes=90, budget='MEDIUM', lat=31.53055, lon=74.36112, rating=4.2, start=11, end=22),
+    dict(name='Mall Road', category='Shopping', tags=['shopping', 'culture', 'history'], minutes=120, budget='MEDIUM', lat=31.5555364, lon=74.3321938, rating=4.3, start=10, end=22),
+    dict(name='Ichra Bazaar', category='Shopping', tags=['shopping', 'culture'], minutes=90, budget='LOW', lat=31.5329591, lon=74.3183969, rating=4.1, start=10, end=22),
+    dict(name='Shah Alam Market', category='Shopping', tags=['shopping', 'culture'], minutes=90, budget='LOW', lat=31.5778376, lon=74.3178981, rating=4.1, start=10, end=20),
+    dict(name='Azam Cloth Market', category='Shopping', tags=['shopping', 'culture'], minutes=90, budget='LOW', lat=31.5840475, lon=74.3208779, rating=4.1, start=10, end=20),
+    dict(name='Urdu Bazaar', category='Shopping', tags=['shopping', 'culture', 'history'], minutes=90, budget='LOW', lat=31.5749997, lon=74.3096226, rating=4.2, start=10, end=20),
+    dict(name='Hall Road Electronics', category='Shopping', tags=['shopping', 'modern'], minutes=90, budget='MEDIUM', lat=31.5640804, lon=74.3187403, rating=4.0, start=10, end=20),
+    dict(name='Hafeez Centre', category='Shopping', tags=['shopping', 'modern'], minutes=90, budget='MEDIUM', lat=31.5160698, lon=74.3429861, rating=4.1, start=10, end=22),
+    dict(name='DHA Y Block Market', category='Shopping', tags=['shopping', 'modern', 'food'], minutes=90, budget='LUXURY', lat=31.4673316, lon=74.4333092, rating=4.3, start=11, end=23),
+    dict(name='Dolmen Mall', category='Shopping', tags=['shopping', 'modern', 'food', 'entertainment'], minutes=150, budget='MEDIUM', lat=31.5052, lon=74.3388, rating=4.3, start=12, end=23),
+    dict(name='Akbari Mandi', category='Shopping', tags=['shopping', 'culture', 'food'], minutes=60, budget='LOW', lat=31.5843, lon=74.3227, rating=4.0, start=8, end=18),
+    dict(name='Brandreth Road Market', category='Shopping', tags=['shopping', 'culture'], minutes=60, budget='LOW', lat=31.5715, lon=74.3187, rating=3.9, start=10, end=18),
+    dict(name='Tollinton Market', category='Shopping', tags=['shopping', 'culture', 'history'], minutes=60, budget='LOW', lat=31.5580, lon=74.3250, rating=4.1, start=10, end=18),
+    dict(name='Lahore Expo Centre', category='Shopping', tags=['shopping', 'modern'], minutes=120, budget='MEDIUM', lat=31.4653, lon=74.3642, rating=4.2, start=10, end=20),
 
-    # Modern / Attractions - Fun, Entertainment
-    dict(name='Wagah Border Ceremony', category='Modern', tags=['modern', 'fun', 'entertainment', 'culture'], minutes=150, budget='LOW', lat=31.6042, lon=74.5750, rating=4.7, start=15, end=19, popularity=92),
-    dict(name='Lahore Zoo', category='Nature', tags=['nature', 'family', 'fun'], minutes=120, budget='LOW', lat=31.5582, lon=74.3344, rating=4.1, start=9, end=17, popularity=65),
-    dict(name='Joyland Amusement Park', category='Modern', tags=['fun', 'entertainment', 'family'], minutes=180, budget='LOW', lat=31.5165, lon=74.3483, rating=4.0, start=16, end=23, popularity=60),
-
-    # Food spots - Foodie
-    dict(name='Gawalmandi Food Street', category='Food', tags=['food', 'foodie', 'culture', 'romantic'], minutes=120, budget='LOW', lat=31.5807, lon=74.3171, rating=4.4, start=18, end=23, popularity=86),
-    dict(name='MM Alam Road (Food)', category='Food', tags=['food', 'foodie', 'modern', 'romantic'], minutes=120, budget='LUXURY', lat=31.5092, lon=74.3443, rating=4.5, start=18, end=23, popularity=84),
-    dict(name='Lakshmi Chowk Food', category='Food', tags=['food', 'foodie', 'culture'], minutes=90, budget='LOW', lat=31.5603, lon=74.3313, rating=4.3, start=19, end=2, popularity=75),
-    dict(name='Hussain Chaghi (Nihari)', category='Food', tags=['food', 'foodie'], minutes=60, budget='LOW', lat=31.5553, lon=74.3233, rating=4.6, start=6, end=14, popularity=82),
+    # ==================== ADVENTURE & PARKS (IDs 81-95, 129-145) ====================
+    dict(name='Jilani Park (Racecourse)', category='Nature', tags=['nature', 'relaxing', 'romantic', 'family'], minutes=90, budget='LOW', lat=31.5095, lon=74.3360, rating=4.5, start=7, end=21),
+    dict(name='Jallo Park', category='Nature', tags=['nature', 'family', 'fun', 'relaxing'], minutes=150, budget='LOW', lat=31.5717696, lon=74.4745342, rating=4.3, start=9, end=18),
+    dict(name='Greater Iqbal Park', category='Nature', tags=['nature', 'relaxing', 'romantic', 'family', 'fun'], minutes=90, budget='LOW', lat=31.5924791, lon=74.3094765, rating=4.6, start=7, end=22),
+    dict(name='Bagh-e-Jinnah (Lawrence Gardens)', category='Nature', tags=['nature', 'relaxing', 'romantic', 'family'], minutes=90, budget='LOW', lat=31.5523964, lon=74.3288503, rating=4.5, start=7, end=20),
+    dict(name='Sozo Water Park', category='Modern', tags=['fun', 'entertainment', 'family'], minutes=240, budget='MEDIUM', lat=31.5813007, lon=74.4868904, rating=4.2, start=10, end=18),
+    dict(name='Joyland', category='Modern', tags=['fun', 'entertainment', 'family'], minutes=180, budget='LOW', lat=31.5323582, lon=74.3631271, rating=4.0, start=16, end=23),
+    dict(name='Model Town Park', category='Nature', tags=['nature', 'relaxing', 'family'], minutes=60, budget='LOW', lat=31.4846361, lon=74.3262319, rating=4.2, start=7, end=21),
+    dict(name='Gaddafi Stadium', category='Modern', tags=['modern', 'fun', 'entertainment'], minutes=120, budget='LOW', lat=31.5133615, lon=74.3334644, rating=4.4, start=10, end=18),
+    dict(name='National Hockey Stadium', category='Modern', tags=['modern', 'fun', 'entertainment'], minutes=90, budget='LOW', lat=31.5111075, lon=74.3351685, rating=4.2, start=10, end=18),
+    dict(name='Lahore Gymkhana', category='Modern', tags=['modern', 'relaxing', 'fun'], minutes=120, budget='LUXURY', lat=31.5351392, lon=74.3546905, rating=4.3, start=8, end=20),
+    dict(name='Safari Park (Wildlife Park)', category='Nature', tags=['nature', 'family', 'fun', 'entertainment'], minutes=180, budget='LOW', lat=31.5746415, lon=74.4754935, rating=4.1, start=9, end=18),
+    dict(name='Lahore Golf Club', category='Modern', tags=['modern', 'relaxing', 'fun'], minutes=180, budget='LUXURY', lat=31.4689395, lon=74.4715513, rating=4.3, start=7, end=18),
+    dict(name='Royal Palm Golf & Country Club', category='Modern', tags=['modern', 'relaxing', 'fun', 'romantic'], minutes=180, budget='LUXURY', lat=31.4665, lon=74.4245, rating=4.4, start=7, end=18),
+    dict(name='Gulshan-e-Iqbal Park', category='Nature', tags=['nature', 'relaxing', 'family'], minutes=60, budget='LOW', lat=31.5139069, lon=74.2890468, rating=4.2, start=7, end=21),
+    dict(name='Askari Park', category='Nature', tags=['nature', 'family', 'fun'], minutes=90, budget='LOW', lat=31.4653340, lon=74.3801628, rating=4.1, start=7, end=21),
+    dict(name='Lahore Canal', category='Nature', tags=['nature', 'relaxing', 'romantic'], minutes=60, budget='LOW', lat=31.5350, lon=74.3150, rating=4.1, start=6, end=21),
+    dict(name='Changa Manga Forest', category='Nature', tags=['nature', 'relaxing', 'family', 'fun'], minutes=300, budget='LOW', lat=31.0800, lon=73.9700, rating=4.3, start=9, end=17),
+    dict(name='Wagah Border', category='Modern', tags=['modern', 'fun', 'entertainment', 'culture'], minutes=150, budget='LOW', lat=31.6047, lon=74.5728, rating=4.7, start=15, end=19),
+    dict(name='Oasis Golf & Aqua Resort', category='Modern', tags=['modern', 'fun', 'entertainment', 'family', 'relaxing'], minutes=240, budget='LUXURY', lat=31.4050, lon=74.2100, rating=4.2, start=9, end=18),
+    dict(name='Nasir Bagh', category='Nature', tags=['nature', 'relaxing'], minutes=60, budget='LOW', lat=31.5905, lon=74.3100, rating=4.0, start=7, end=20),
+    dict(name='Shahdara Bagh', category='Nature', tags=['nature', 'history', 'historical', 'relaxing'], minutes=120, budget='LOW', lat=31.6200, lon=74.2780, rating=4.2, start=9, end=17),
+    dict(name='Arfa Software Technology Park', category='Modern', tags=['modern'], minutes=60, budget='LOW', lat=31.4750, lon=74.2683, rating=4.0, start=9, end=17),
 ]
 
 
 def ensure_lahore_places_seeded():
-    if Place.objects.filter(city='Lahore').exists():
+    """Seed default Lahore places. Updates count if new places were added."""
+    existing_count = Place.objects.filter(city='Lahore').count()
+    if existing_count >= len(DEFAULT_LAHORE_PLACES):
         return
     objs = []
     for p in DEFAULT_LAHORE_PLACES:
@@ -270,6 +384,18 @@ def generate_itinerary(*, user, city: str, start_date, end_date, travelers: int,
                 if p.id in used_ids:
                     continue
                 used_ids.add(p.id)
+                day_places.append(p)
+                if len(day_places) >= per_day:
+                    break
+
+        # 3b. For longer trips — allow reusing places from earlier days
+        #     with a preference for different categories than already in this day
+        if len(day_places) < per_day:
+            current_cats = {p.category for p in day_places}
+            reusable = [p for p in places if p.id in used_ids and p.id not in {dp.id for dp in day_places}]
+            # Prefer places whose category isn't already in today
+            reusable.sort(key=lambda p: (p.category in current_cats, -_score_place(p, interests_tags, mood_tags)))
+            for p in reusable:
                 day_places.append(p)
                 if len(day_places) >= per_day:
                     break
@@ -513,6 +639,16 @@ def regenerate_full_trip(itinerary: Itinerary):
                 break
             if not filled:
                 break
+
+        # Reuse places from earlier days for longer trips
+        if len(day_places) < per_day:
+            current_cats = {p.category for p in day_places}
+            reusable = [p for p in places if p.id in used_ids and p.id not in {dp.id for dp in day_places}]
+            reusable.sort(key=lambda pp: (pp.category in current_cats, -_score_place(pp, interests_tags, mood_tags)))
+            for p in reusable:
+                day_places.append(p)
+                if len(day_places) >= per_day:
+                    break
 
         items = _build_day_items(day_places, per_day)
 

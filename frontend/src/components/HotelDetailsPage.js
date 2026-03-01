@@ -79,23 +79,7 @@ const generateReviewCategories = (overallRating) => {
   };
 };
 
-// Amenity icons helper function
-const getAmenityIcon = (amenity) => {
-  const amenityLower = amenity.toLowerCase();
-  if (amenityLower.includes('wifi')) return FaWifi;
-  if (amenityLower.includes('parking')) return FaParking;
-  if (amenityLower.includes('pool')) return FaSwimmingPool;
-  if (amenityLower.includes('restaurant')) return FaUtensils;
-  if (amenityLower.includes('breakfast') || amenityLower.includes('coffee')) return FaCoffee;
-  if (amenityLower.includes('gym') || amenityLower.includes('fitness')) return FaDumbbell;
-  if (amenityLower.includes('air conditioning') || amenityLower.includes('ac')) return FaSnowflake;
-  if (amenityLower.includes('front desk') || amenityLower.includes('room service') || amenityLower.includes('concierge')) return FaConciergeBell;
-  if (amenityLower.includes('spa')) return FaSpa;
-  if (amenityLower.includes('shuttle')) return FaShuttleVan;
-  if (amenityLower.includes('tv')) return FaTv;
-  if (amenityLower.includes('bathroom')) return FaBath;
-  return FaCheck;
-};
+
 
 // Image Gallery Component
 const ImageGallery = ({ images, hotelName, onClose }) => {
@@ -439,10 +423,64 @@ const HotelDetailsPage = () => {
     return generateReviewCategories(hotel?.rating || 7);
   }, [hotel?.rating]);
 
-  // Generate room types from hotel data
+  // Generate room types from hotel data – use REAL scraped rooms when available
   const roomTypes = useMemo(() => {
     if (!hotel) return [];
-    
+
+    // ── If this hotel has real scraped rooms, use them directly ──────────
+    if (hotel.rooms?.length > 0 && hotel.is_scraped) {
+      return hotel.rooms.map((r, idx) => {
+        const pricePerNight = r.price_per_night || hotel.double_bed_price_per_day || hotel.price || 5000;
+        const rt = r.room_type || 'Standard Room';
+        const isFreeCancellation = (r.cancellation_policy || '').toLowerCase().includes('free');
+        const hasBreakfast = (r.meal_plan || '').toLowerCase().includes('breakfast');
+        const maxGuests = r.max_occupancy || 2;
+
+        // Map room type to bed description
+        const bedMap = {
+          'Single Room': '1 single bed',
+          'Double Room': '1 double bed',
+          'Triple Room': '3 single beds or 1 double + 1 single',
+          'Quad Room': '2 double beds',
+          'Quint Room': '2 double beds + 1 single',
+          'Family Room': '2 double beds',
+          'Suite': '1 king bed + living area',
+          'Deluxe Room': '1 king bed',
+          'Dormitory': 'Bunk beds',
+          'Entire Property': 'Multiple rooms',
+        };
+
+        return {
+          id: `scraped-room-${idx}`,
+          name: rt,
+          beds: bedMap[rt] || '1 double bed',
+          pricePerNight: pricePerNight,
+          maxGuests: maxGuests,
+          size: null,
+          view: null,
+          highFloor: false,
+          airConditioning: true,
+          privateBathroom: true,
+          flatScreenTV: true,
+          minibar: false,
+          freeWifi: true,
+          breakfastIncluded: hasBreakfast,
+          freeCancellation: isFreeCancellation,
+          valetParking: false,
+          noPrepayment: isFreeCancellation,
+          noCreditCard: false,
+          geniusDiscount: false,
+          // Scraped extras
+          meal_plan: r.meal_plan || null,
+          cancellation_policy: r.cancellation_policy || null,
+          availability: r.availability || 'Available',
+          total_price: r.total_price || null,
+          amenities: hotel.amenities || [],
+        };
+      });
+    }
+
+    // ── Fallback: generate standard room types from base price ───────────
     const basePrice = hotel.double_bed_price_per_day || hotel.price || 5000;
     
     return [
@@ -579,6 +617,25 @@ const HotelDetailsPage = () => {
   const handleBooking = () => {
     if (!selectedRoom || selectedRoomCount === 0) return;
 
+    // Map room name to room_type key for booking
+    const roomNameMap = {
+      'Single Room': 'single',
+      'Double Room': 'double',
+      'Triple Room': 'triple',
+      'Quad Room': 'quad',
+      'Quint Room': 'quint',
+      'Family Room': 'family',
+      'Suite': 'suite',
+      'Deluxe Room': 'deluxe',
+      'Dormitory': 'dormitory',
+      'Entire Property': 'entire',
+      'Standard Queen Room': 'double',
+      'Deluxe King Room': 'deluxe',
+      'Family Suite': 'family',
+    };
+
+    const roomTypeKey = roomNameMap[selectedRoom.name] || 'double';
+
     navigate('/hotel-booking', {
       state: {
         hotel: {
@@ -586,7 +643,7 @@ const HotelDetailsPage = () => {
           selectedRoom: selectedRoom,
           roomsSelected: selectedRoomCount
         },
-        roomType: selectedRoom.id.includes('queen') ? 'double' : selectedRoom.id.includes('king') ? 'double' : 'family',
+        roomType: roomTypeKey,
         checkIn: searchParams?.checkIn,
         checkOut: searchParams?.checkOut,
         adults: searchParams?.adults || 2,

@@ -48,6 +48,13 @@ class ItineraryGenerateView(APIView):
             mood=data.get('mood', ''),
         )
 
+        # Create notification
+        try:
+            from authentication.models import Notification
+            Notification.itinerary_ready(request.user, data.get('city', 'Lahore'))
+        except Exception:
+            pass
+
         return Response({'success': True, 'itinerary': ItinerarySerializer(itinerary).data}, status=status.HTTP_201_CREATED)
 
 
